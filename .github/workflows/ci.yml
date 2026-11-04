@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    name: Build & test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # SFML builds from source via FetchContent and needs these system
+      # windowing/X11 dev libraries on Linux runners.
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
+            libudev-dev libgl1-mesa-dev libfreetype-dev \
+            xvfb
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Run tests
+        working-directory: build
+        run: ctest --output-on-failure --build-config Release
+
+      # Linux runners have no display server; SFML window creation needs a
+      # virtual framebuffer to run the smoke-test executable headlessly.
+      - name: Run build smoke test (Linux, headless)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum ./build/fireteam_skirmish
+
+      - name: Run build smoke test (macOS)
+        if: runner.os == 'macOS'
+        run: ./build/fireteam_skirmish
+
+      - name: Run build smoke test (Windows)
+        if: runner.os == 'Windows'
+        run: ./build/Release/fireteam_skirmish.exe
+        shell: bash

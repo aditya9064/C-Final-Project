@@ -1,0 +1,45 @@
+# Build output
+build/
+out/
+cmake-build-*/
+_deps/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_CPack_Packages/
+CPackConfig.cmake
+CPackSourceConfig.cmake
+
+# Compiled objects / binaries
+*.o
+*.obj
+*.exe
+*.dll
+*.dylib
+*.so
+*.a
+*.lib
+*.pdb
+
+# IDE / editor
+.vscode/
+.vs/
+.idea/
+*.swp
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Memory/sanitizer diagnostic output (keep the final evidence you choose to
+# commit under docs/evidence/ instead of raw tool dumps)
+*.dSYM/
