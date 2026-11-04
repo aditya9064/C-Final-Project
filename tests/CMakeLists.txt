@@ -19,4 +19,8 @@ target_include_directories(fireteam_tests PRIVATE
 )
 target_link_libraries(fireteam_tests PRIVATE enet)
 
+if(WIN32)
+  target_link_libraries(fireteam_tests PRIVATE ws2_32 winmm)
+endif()
+
 add_test(NAME fireteam_tests COMMAND fireteam_tests)
