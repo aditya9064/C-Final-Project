@@ -1,39 +1,45 @@
-// Build/dependency smoke test for Fireteam: Skirmish.
-//
-// This file intentionally does NOT contain gameplay logic yet. Its only
-// job is to prove that SFML (rendering) and ENet (networking) fetch,
-// compile, and link correctly on a fresh clone -- the "build that works on
-// another computer" requirement. Each teammate's subsystem (engine,
-// rendering, combat, networking) will replace pieces of this as the
-// project grows; see docs/proposal.md for the planned architecture.
-
 #include <SFML/Graphics.hpp>
-#include <enet/enet.h>
-
-#include <iostream>
 
 int main() {
-  if (enet_initialize() != 0) {
-    std::cerr << "Failed to initialize ENet.\n";
-    return 1;
-  }
-  std::cout << "[smoke test] ENet initialized successfully.\n";
+    // The game window. SFML 2.6 API.
+    const unsigned int width  = 960;
+    const unsigned int height = 540;
+    sf::RenderWindow window(sf::VideoMode(width, height), "Fireteam: Skirmish");
+    window.setVerticalSyncEnabled(true);  // cap to refresh rate, don't peg the CPU
 
-  sf::RenderWindow window(sf::VideoMode(640, 480),
-                           "Fireteam: Skirmish - Build Smoke Test");
-  sf::CircleShape placeholderPlayer(50.f);
-  placeholderPlayer.setFillColor(sf::Color::Green);
-  placeholderPlayer.setPosition(295.f, 190.f);
+    // Placeholder square standing in for a player until Player (#6) exists.
+    sf::RectangleShape placeholder(sf::Vector2f(40.f, 40.f));
+    placeholder.setFillColor(sf::Color(80, 200, 120));
+    placeholder.setPosition(width / 2.f - 20.f, height / 2.f - 20.f);
 
-  window.clear(sf::Color(30, 30, 30));
-  window.draw(placeholderPlayer);
-  window.display();
-  // Closed immediately: this is a headless-friendly build check, not the
-  // interactive game loop.
-  window.close();
+    // Measures real time between frames. deltaSeconds is what makes movement
+    // frame-rate independent (position += velocity * deltaSeconds), which
+    // Player (#6) will depend on.
+    sf::Clock clock;
 
-  std::cout << "[smoke test] SFML window created and rendered successfully.\n";
+    // Main loop: input -> update -> render, every frame, until the window closes.
+    while (window.isOpen()) {
+        const float deltaSeconds = clock.restart().asSeconds();
 
-  enet_deinitialize();
-  return 0;
+        // 1) Input: drain the event queue. Closing the window ends the loop.
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            if (event.type == sf::Event::KeyPressed &&
+                event.key.code == sf::Keyboard::Escape)
+                window.close();
+        }
+
+        // 2) Update: game state advances here using deltaSeconds.
+        //    Entity update() calls go here once #14 lands. Nothing moves yet.
+        (void)deltaSeconds;
+
+        // 3) Render: clear, draw everything, show the frame.
+        window.clear(sf::Color(30, 30, 30));
+        window.draw(placeholder);
+        window.display();
+    }
+
+    return 0;  // RenderWindow's destructor cleans up the window (RAII).
 }
