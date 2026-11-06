@@ -53,3 +53,33 @@ jobs:
         if: runner.os == 'Windows'
         run: ./build/Release/fireteam_skirmish.exe
         shell: bash
+
+  # Memory diagnostic required by the course: run the unit tests under
+  # AddressSanitizer + LeakSanitizer. Linux only, because Apple clang does
+  # not support LeakSanitizer and MSVC's ASan lacks leak detection.
+  asan:
+    name: AddressSanitizer + LeakSanitizer (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
+            libudev-dev libgl1-mesa-dev libfreetype-dev
+
+      - name: Configure (ASan)
+        run: >
+          cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer"
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address"
+
+      - name: Build tests (ASan)
+        run: cmake --build build-asan --target fireteam_tests --parallel
+
+      - name: Run tests under ASan/LSan
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+        run: ./build-asan/tests/fireteam_tests

@@ -43,3 +43,4 @@ Thumbs.db
 # Memory/sanitizer diagnostic output (keep the final evidence you choose to
 # commit under docs/evidence/ instead of raw tool dumps)
 *.dSYM/
+build-asan/

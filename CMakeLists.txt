@@ -33,14 +33,26 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(SFML enet)
 
+# --- Game logic library ----------------------------------------------------
+# Everything that is NOT main() lives here, so the executable and the test
+# binary can both link it without compiling the same sources twice. Keeping
+# gameplay code free of SFML/ENet where possible also makes it unit-testable
+# without opening a window or a socket.
+add_library(fireteam_core STATIC
+  src/Vector2.cpp
+  src/Entity.cpp
+)
+# PUBLIC: anyone linking fireteam_core also gets this include path.
+target_include_directories(fireteam_core PUBLIC include)
+
 # --- Smoke-test executable ------------------------------------------------
 # This is a minimal build/dependency check, NOT the game itself. It proves
 # SFML (rendering) and ENet (networking) are fetched, compiled, and linked
 # correctly on a fresh clone/CI runner. Real game source will replace/extend
 # this as subsystems (engine, rendering, combat, networking) land.
 add_executable(fireteam_skirmish src/main.cpp)
-target_include_directories(fireteam_skirmish PRIVATE include ${enet_SOURCE_DIR}/include)
-target_link_libraries(fireteam_skirmish PRIVATE sfml-graphics sfml-window sfml-system enet)
+target_include_directories(fireteam_skirmish PRIVATE ${enet_SOURCE_DIR}/include)
+target_link_libraries(fireteam_skirmish PRIVATE fireteam_core sfml-graphics sfml-window sfml-system enet)
 
 if(WIN32)
   target_link_libraries(fireteam_skirmish PRIVATE ws2_32 winmm)
