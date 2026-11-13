@@ -102,3 +102,37 @@ Format (one entry per use):
 - **Excerpt:** Request: "lets get woring on the next steps." Explanation:
   the #4 branch is based on `develop`, keeping it separate from the open
   #3 PR so that the network wrapper PR does not bundle unrelated work.
+### 2026-11-08 - GameWorld/GameState scaffolding - GitHub Copilot
+- **Where:** `GameWorld.hpp/.cpp`, `GameState.hpp/.cpp`, their tests,
+  CMake targets, and README architecture notes (issue #3).
+- **Why:** Implement the next engine task with beginner explanations.
+- **Generated changes:** Copilot implemented ownership, update/removal,
+  elapsed-time validation, and legal phase transitions. The learner's
+  review, modifications, and understanding have not yet been confirmed.
+- **Validation performed by Copilot:** `cmake -S . -B build
+  -DCMAKE_BUILD_TYPE=Debug`, `cmake --build build --parallel 4`,
+  `ctest --test-dir build --output-on-failure`, and
+  `./build/tests/fireteam_tests` passed: 27 cases, 88 assertions.
+  `git diff --check` passed. Existing third-party CMake deprecation
+  warnings remain.
+- **Memory check:** Configured with
+  `cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug
+  -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer"
+  -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address"`, then built with
+  `cmake --build build-asan --target fireteam_tests --parallel 4`.
+  `./build-asan/tests/fireteam_tests --test-case='*GameWorld*,*GameState*'`
+  passed with no ASan diagnostics (exit 0). Actual summary:
+
+  ```text
+  [doctest] test cases:  8 |  8 passed | 0 failed | 19 skipped
+  [doctest] assertions: 41 | 41 passed | 0 failed |
+  [doctest] Status: SUCCESS!
+  ```
+
+  Leak detection is not supported by Apple clang on this platform.
+  No remote CI run or gameplay integration was performed for this change.
+- **Learning topics to review:** `std::move` transfers ownership, removal
+  destroys owned entities, and a state machine rejects illegal transitions.
+  These are teaching topics, not a claim of learning already completed.
+- **Excerpt:** Request: "lets get started then". Explanation:
+  "GameWorld owns and updates entities, while GameState tracks the match phase."

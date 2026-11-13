@@ -14,6 +14,8 @@ add_executable(fireteam_tests
   test_vector2.cpp
   test_entity.cpp
   test_network_manager.cpp
+  test_game_world.cpp
+  test_game_state.cpp
 )
 target_include_directories(fireteam_tests PRIVATE
   ${doctest_SOURCE_DIR}
