@@ -126,6 +126,13 @@ hierarchy, since polymorphic dispatch over one container of entities is the
 natural fit for a single game-update loop. See
 [docs/proposal.md](docs/proposal.md#3-design-sketch) for the full rationale.
 
+`NetworkManager` currently wraps ENet host lifetime with RAII and exposes
+server creation, client connection, server broadcast, client-to-server send,
+and connection/disconnection/packet events. It carries opaque payload bytes;
+application-message framing and validation belong to the game protocol,
+which is not implemented yet. A localhost integration test connects separate
+server/client managers and exchanges packets.
+
 ### Match state machine
 
 ```mermaid
