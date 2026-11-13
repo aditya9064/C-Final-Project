@@ -5,11 +5,10 @@
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)
 ![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
-A real-time, team-based tactical shooter for small LAN groups — built as our
-CSC2210 (Procedural and Object-Oriented C++) final project. Host a match
-with your friends over a local network, fill empty slots with AI bots, and
-fight it out with hitscan weapons and (stretch goal) physics-based
-grenades.
+A scoped 3D first-person shooter for two players on a local network — built
+as our CSC2210 (Procedural and Object-Oriented C++) final project. Explore a
+compact arena, aim and move from a first-person camera, and compete with a
+hitscan rifle. Bots, grenades, and larger matches are optional stretch goals.
 
 > **Course:** CSC2210 Procedural and Object-Oriented C++ — Dr. Chibuzo Ukegbu
 > **Team:** Aditya Miriyala, Khushal Lingamaneni, Koushik Cherukuri
@@ -31,24 +30,23 @@ grenades.
 
 ## About
 
-Friend groups who want a quick, casual team shootout don't have a
-lightweight way to do it themselves — commercial games assume matchmaking
-infrastructure or a dedicated server, which is overkill for "a few people on
-the same Wi-Fi for twenty minutes." **Fireteam: Skirmish** solves that: two
-or more human players connect directly over LAN, and AI bots fill any
-remaining slots so a match is never blocked on having exactly the "right"
-number of people.
+**Fireteam: Skirmish** is a small 3D first-person LAN shooter. Its core goal
+is a playable two-player match in one compact arena: first-person movement
+and mouse-look, one hitscan rifle, 3D hit detection, health, elimination,
+and a match result. The host owns authoritative match state; ENet carries
+the messages between instances. A 5v5 mode, bots, grenades, and extra maps
+are stretch goals, not prerequisites for a complete project.
 
 Full project rationale, scope, and design justification are in the
-[project proposal](docs/proposal.pdf).
+[project proposal](docs/proposal.md) ([PDF](docs/proposal.pdf)).
 
 ## Features
 
 ### Core (required to work)
-- Real-time networked gameplay over LAN (2+ human players) via ENet
-- Player movement, aiming, and a hitscan weapon
-- Hit detection and damage, synced consistently across clients
-- Win condition when one side/player remains
+- Real-time networked gameplay for two human players over LAN via ENet
+- 3D first-person movement and mouse-look in one compact arena
+- One hitscan rifle, 3D hit detection, health and elimination
+- Host-authoritative match result, replicated to both players
 - Clean OOP structure: polymorphic `Entity` hierarchy, RAII-wrapped
   networking, explicit `GameState` state machine
 
@@ -73,14 +71,14 @@ Full project rationale, scope, and design justification are in the
 classDiagram
     class Entity {
         <<abstract>>
-        +Vector2 position
+        +Vector3 position
         +int health
         +update()
     }
     class Player {
         +Weapon* weapon
         +bool isLocal
-        +handleInput()
+        +readInput()
         +fire()
     }
     class Bot {
@@ -88,7 +86,7 @@ classDiagram
         +decide()
     }
     class Projectile {
-        +Vector2 velocity
+        +Vector3 velocity
         +applyPhysics()
     }
     class Weapon {
@@ -114,10 +112,16 @@ classDiagram
         +entities()
         +addEntity()
         +update()
+        +checkHits()
+    }
+    class Renderer {
+        +Camera3D camera
+        +draw(GameWorld)
     }
 
     GameWorld "1" *-- "*" Entity : owns
     GameWorld --> NetworkManager : uses
+    Renderer --> GameWorld : reads
 ```
 
 We use **composition** for `Player`-has-a-`Weapon` (weapons are swappable,
@@ -130,13 +134,19 @@ Implemented foundation: `GameWorld` owns entities with `unique_ptr`, updates
 living entities, then removes dead ones. Adding a null entity or updating
 with negative/non-finite elapsed time throws `std::invalid_argument`.
 References to removed entities must not be used after an update.
-The renderer will read entity data rather than calling `Entity::render()`;
-gameplay has no SFML dependency.
+The renderer reads entity data rather than calling `Entity::render()`, and
+the gameplay core does not depend on raylib.
 
 `GameState` starts in `MatchPhase::Lobby` and permits only the cycle
 Lobby -> InGame -> MatchOver -> Lobby. Illegal transitions throw
 `std::logic_error` without changing the phase. Player-count checks and
 winner detection are future work in #11, not implemented by this skeleton.
+The renderer uses raylib's 3D camera and drawing API, keeping gameplay and
+collision rules separate from rendering. `NetworkManager` will wrap ENet
+host lifetime with RAII; application message framing, validation, and
+host-authoritative state replication remain part of the planned game protocol.
+`Vector3` now supplies the 3D math used by entity positions and movement.
+`Vector2` remains available for genuinely 2D uses such as HUD layout.
 
 ### Match state machine
 
@@ -149,37 +159,37 @@ stateDiagram-v2
     MatchOver --> [*]: quit
 ```
 
-### Network data flow (a shot being fired)
+### Host-authoritative network data flow (a shot being fired)
 
 ```mermaid
 sequenceDiagram
-    participant P1 as Player 1 (local client)
-    participant N1 as NetworkManager (Client 1)
-    participant N2 as NetworkManager (Client 2)
-    participant P2 as Player 2 (remote, on Client 2)
+    participant P1 as Player 1 (host)
+    participant N1 as NetworkManager (host)
+    participant N2 as NetworkManager (joining client)
+    participant P2 as Player 2 (joining client)
 
-    P1->>P1: Input: fire weapon
-    P1->>N1: serialize FireEvent
-    N1->>N2: send packet (ENet, UDP)
-    N2->>P2: apply damage, update health
-    N2-->>N1: state sync / ack
-    N1-->>P1: confirm hit (UI update)
+    P2->>N2: Input: fire request
+    N2->>N1: Send request (ENet)
+    N1->>N1: Validate shot and update match state
+    N1-->>N2: Replicate health and match state
+    N1->>P1: Update host world
+    N2->>P2: Update client world
 ```
 
 ### Client/server component overview
 
 ```mermaid
 flowchart LR
-    subgraph ClientA [Client A]
+    subgraph Host [Host]
         InputA[Input] --> PlayerA[Player]
         PlayerA --> WorldA[GameWorld]
-        WorldA --> RendererA[Renderer / SFML]
-        WorldA <--> NetA[NetworkManager]
+        WorldA --> RendererA[Renderer / raylib]
+        WorldA <--> NetA[NetworkManager / authority]
     end
-    subgraph ClientB [Client B]
+    subgraph Client [Joining client]
         InputB[Input] --> PlayerB[Player]
         PlayerB --> WorldB[GameWorld]
-        WorldB --> RendererB[Renderer / SFML]
+        WorldB --> RendererB[Renderer / raylib]
         WorldB <--> NetB[NetworkManager]
     end
     NetA <-->|ENet over UDP| NetB
@@ -191,7 +201,7 @@ flowchart LR
 |---|---|---|
 | Language | C++20 | Course requirement |
 | Build | CMake 3.16+ with `FetchContent` | One build system works across Windows/macOS/Linux with no manual dependency installs |
-| Rendering/window/input | [SFML](https://www.sfml-dev.org/) 2.6.2 | Gentle learning curve, strong OOP fit, team's first graphics library |
+| Rendering/window/input | [raylib](https://www.raylib.com/) 5.5 | Direct 3D camera, drawing, and input APIs suitable for a compact FPS prototype |
 | Networking | [ENet](http://enet.bespin.org/) 1.3.18 | Purpose-built for real-time game networking (sequencing/reliability over UDP), much smaller surface than general-purpose async I/O libraries |
 | Testing | [doctest](https://github.com/doctest/doctest) 2.4.11 | Header-only, fast to compile, fast to run in CI |
 
@@ -201,7 +211,7 @@ flowchart LR
 - CMake ≥ 3.16
 - A C++20 compiler (recent MSVC, GCC, or Clang)
 - Internet connection on first configure (CMake `FetchContent` downloads
-  SFML, ENet, and doctest source)
+  raylib, ENet, and doctest source)
 
 ### Build
 
@@ -223,15 +233,16 @@ build\Release\fireteam_skirmish.exe
 ```
 
 This currently runs a **build/dependency smoke test** (opens a window,
-draws a placeholder shape, initializes networking) rather than the full
-game — see [Roadmap](#roadmap) for what's implemented so far.
+draws a placeholder 3D scene, initializes networking) rather than the full
+game. Gameplay and the networking protocol still need to be ported to the
+approved 3D scope.
 
 ## Project structure
 
 ```
 c-final-project/
 ├── .github/            CI workflow, issue/PR templates
-├── assets/             Game assets (sprites, fonts, sounds) as they're added
+├── assets/             Game assets (models, textures, fonts, sounds) as added
 ├── docs/                proposal, AI-use log, evidence (tests/memory diagnostics)
 ├── include/fireteam/    Public headers
 ├── src/                 Implementation (.cpp)
@@ -256,8 +267,8 @@ test-evidence table will be added under `docs/` as they're produced.
 
 - `main` — always buildable/demoable, protected, merges only via reviewed PR
 - `develop` — integration branch for finished feature work
-- `feature/networking`, `feature/rendering`, `feature/combat` — long-lived
-  branches matching subsystem ownership (see below)
+- Short-lived `feature/*` task branches start from `develop` and merge back
+  after review and passing checks
 
 ```mermaid
 gitGraph
@@ -265,16 +276,11 @@ gitGraph
     branch develop
     checkout develop
     commit id: "scaffold"
-    branch feature/networking
-    checkout feature/networking
-    commit id: "enet wrapper"
+    branch feature/task
+    checkout feature/task
+    commit id: "tested task"
     checkout develop
-    branch feature/rendering
-    checkout feature/rendering
-    commit id: "sfml window"
-    checkout develop
-    merge feature/networking
-    merge feature/rendering
+    merge feature/task
     checkout main
     merge develop tag: "Check-in 1"
 ```
@@ -285,8 +291,8 @@ Full conventions (commit style, review expectations, code style) are in
 | Area | Owner |
 |---|---|
 | Core engine, game loop, `NetworkManager` | Aditya Miriyala |
-| Rendering, player movement/input, HUD | Koushik Cherukuri |
-| Combat systems, hit detection, AI bots, grenade physics | Khushal Lingamaneni |
+| raylib 3D rendering, camera, player controls, HUD | Koushik Cherukuri |
+| Weapons, 3D hit detection, optional bots/grenade | Khushal Lingamaneni |
 
 (Everyone writes tests for their own subsystem and reviews teammates' PRs,
 per the course's teamwork requirement — ownership above is primary
@@ -296,11 +302,11 @@ responsibility, not exclusive access.)
 
 | Week | Milestone |
 |---|---|
-| 9 | Proposal finalized; repo + CMake skeleton; SFML/ENet intro tutorials |
-| 10 (Check-in 1) | Local 2-player movement + rendering; first unit tests; networking integration begins |
-| 11 | Player movement synced across machines; hit detection begins |
-| 12 (Check-in 2) | Full core loop playable end-to-end; memory diagnostics run |
-| 13 | Stretch goals (bots / grenade physics) as time allows |
+| 9 | Proposal and repository foundation |
+| 10 (Check-in 1) | Local 3D arena, first-person movement/look, initial unit tests |
+| 11 | Two instances exchange player state; hit detection and damage integrated |
+| 12 (Check-in 2) | Two-player core match playable; memory diagnostics run |
+| 13 | Stabilize core; optional goals only if required features are reliable |
 | 14 (Readiness check) | Fresh-clone build test using only this README; demo rehearsal |
 | 15 | Final polish, report, slides, submission |
 

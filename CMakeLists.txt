@@ -12,16 +12,14 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
 
 include(FetchContent)
 
-# --- SFML: rendering, window, input -------------------------------------
+# --- raylib: 3D rendering, window, input --------------------------------
 FetchContent_Declare(
-  SFML
-  GIT_REPOSITORY https://github.com/SFML/SFML.git
-  GIT_TAG 2.6.2
+  raylib
+  GIT_REPOSITORY https://github.com/raysan5/raylib.git
+  GIT_TAG 5.5
   GIT_SHALLOW TRUE
 )
-set(SFML_BUILD_AUDIO FALSE CACHE BOOL "" FORCE)
-set(SFML_BUILD_NETWORK FALSE CACHE BOOL "" FORCE)
-set(BUILD_SHARED_LIBS TRUE CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 # --- ENet: lightweight UDP networking for real-time multiplayer ---------
 FetchContent_Declare(
@@ -31,15 +29,16 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE
 )
 
-FetchContent_MakeAvailable(SFML enet)
+FetchContent_MakeAvailable(raylib enet)
 
 # --- Game logic library ----------------------------------------------------
 # Everything that is NOT main() lives here, so the executable and the test
 # binary can both link it without compiling the same sources twice. Keeping
-# gameplay code free of SFML/ENet where possible also makes it unit-testable
+# gameplay code free of raylib/ENet where possible also makes it unit-testable
 # without opening a window or a socket.
 add_library(fireteam_core STATIC
   src/Vector2.cpp
+  src/Vector3.cpp
   src/Entity.cpp
   src/GameWorld.cpp
   src/GameState.cpp
@@ -49,12 +48,12 @@ target_include_directories(fireteam_core PUBLIC include)
 
 # --- Smoke-test executable ------------------------------------------------
 # This is a minimal build/dependency check, NOT the game itself. It proves
-# SFML (rendering) and ENet (networking) are fetched, compiled, and linked
+# raylib (rendering) and ENet (networking) are fetched, compiled, and linked
 # correctly on a fresh clone/CI runner. Real game source will replace/extend
 # this as subsystems (engine, rendering, combat, networking) land.
 add_executable(fireteam_skirmish src/main.cpp)
 target_include_directories(fireteam_skirmish PRIVATE ${enet_SOURCE_DIR}/include)
-target_link_libraries(fireteam_skirmish PRIVATE fireteam_core sfml-graphics sfml-window sfml-system enet)
+target_link_libraries(fireteam_skirmish PRIVATE fireteam_core raylib enet)
 
 if(WIN32)
   target_link_libraries(fireteam_skirmish PRIVATE ws2_32 winmm)

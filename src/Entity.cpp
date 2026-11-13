@@ -7,7 +7,7 @@ namespace fireteam {
 // A zero/negative max health would make an entity dead on arrival, which is
 // never what a caller means; clamp to at least 1 so the invariant
 // "a freshly constructed entity is alive" always holds.
-Entity::Entity(Vector2 position, int maxHealth)
+Entity::Entity(Vector3 position, int maxHealth)
     : position_(position),
       health_(std::max(1, maxHealth)),
       maxHealth_(std::max(1, maxHealth)) {}

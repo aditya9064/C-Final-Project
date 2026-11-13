@@ -6,7 +6,7 @@
 // `applyDamage()`, which enforces that rule in one place.
 #pragma once
 
-#include "fireteam/Vector2.hpp"
+#include "fireteam/Vector3.hpp"
 
 namespace fireteam {
 
@@ -14,7 +14,7 @@ class Entity {
  public:
   // `explicit` stops the compiler from silently converting an int into an
   // Entity (e.g. passing `100` where an Entity was expected).
-  explicit Entity(Vector2 position, int maxHealth);
+  explicit Entity(Vector3 position, int maxHealth);
 
   // RULE: a class with any virtual method needs a virtual destructor.
   // Without it, `delete`-ing a Player through an `Entity*` (which is exactly
@@ -45,17 +45,17 @@ class Entity {
   // Accessors are `const` because they don't modify the object; this lets
   // them be called on `const Entity&` (e.g. when another entity is only
   // inspecting this one for a range check).
-  const Vector2& position() const { return position_; }
+  const Vector3& position() const { return position_; }
   int health() const { return health_; }
   int maxHealth() const { return maxHealth_; }
   bool isAlive() const { return health_ > 0; }
 
-  void setPosition(Vector2 position) { position_ = position; }
+  void setPosition(Vector3 position) { position_ = position; }
 
  protected:
   // `protected` lets subclasses (Player, Bot) read/write position directly
   // in their update() without exposing it to unrelated code.
-  Vector2 position_;
+  Vector3 position_;
 
  private:
   // Trailing underscore marks private data members, distinguishing them from

@@ -70,6 +70,44 @@ Format (one entry per use):
   virtual destructor "would only run ~Entity() and skip ~Player(), leaking
   whatever Player owns."
 
+### 2026-11-13 — Aditya Miriyala — GitHub Copilot (Copilot SDK in VS Code)
+- **Where:** `docs/proposal.md`, `README.md`, CMake/rendering smoke test, and CI.
+- **Why:** The team chose a 3D first-person direction and the professor
+  approved the core-scope change. The project plan and rendering dependency
+  needed to reflect that decision without expanding the required game beyond
+  a two-player LAN arena.
+- **What I kept/changed:** Kept the team's 3D FPS decision and narrowed the
+  core to one arena, first-person controls, one hitscan rifle, and a
+  two-player ENet match. Replaced the SFML rendering plan with raylib; bots,
+  grenades, and 5v5 remain stretch goals.
+- **How I checked it:** Verified the raylib 5.5 release tag. Ran
+  `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug`,
+  `cmake --build build --parallel 4`,
+  `ctest --test-dir build --output-on-failure`, and
+  `./build/fireteam_skirmish`; the build succeeded, all tests passed, and the
+  3D renderer smoke test opened, rendered, and closed successfully. Updated
+  `docs/proposal.pdf` from the revised Markdown source and confirmed it is a
+  readable three-page PDF. GitHub CI has not yet run for this branch.
+- **What I learned:** The pivot affects more than rendering: gameplay
+  positions and hit detection must become 3D, while rendering should remain
+  separate from gameplay so logic can still be tested without a window.
+
+### 2026-11-13 — Aditya Miriyala — GitHub Copilot (Copilot SDK in VS Code)
+- **Where:** `include/fireteam/Vector3.hpp`, `src/Vector3.cpp`,
+  `include/fireteam/Entity.hpp`, `src/Entity.cpp`, and vector/entity tests.
+- **Why:** The FPS pivot requires 3D positions, movement, and direction math
+  for gameplay and hit detection.
+- **What I kept/changed:** Added a tested `Vector3` value type with arithmetic,
+  dot/cross products, length, normalization, and distance; migrated `Entity`
+  and its tests from `Vector2` to `Vector3`. Kept `Vector2` available for
+  future 2D UI use.
+- **How I checked it:** `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug`,
+  `cmake --build build --parallel 4`, and
+  `ctest --test-dir build --output-on-failure` passed.
+- **What I learned:** A 3D cross product gives a perpendicular direction,
+  which will be useful for camera-relative movement, while dot products
+  support aiming and hit-direction calculations.
+
 <!-- Add further entries above this line as the project progresses. -->
 
 ### 2026-11-08 - GameWorld/GameState scaffolding - GitHub Copilot

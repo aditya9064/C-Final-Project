@@ -7,7 +7,7 @@
 #include "fireteam/Entity.hpp"
 
 using fireteam::Entity;
-using fireteam::Vector2;
+using fireteam::Vector3;
 
 namespace {
 
@@ -15,7 +15,7 @@ namespace {
 // also how Player/Bot will look: override update(), inherit everything else.
 class TestEntity : public Entity {
  public:
-  TestEntity(Vector2 position, int maxHealth) : Entity(position, maxHealth) {}
+  TestEntity(Vector3 position, int maxHealth) : Entity(position, maxHealth) {}
 
   // `override` makes the compiler verify this really overrides a virtual in
   // the base. A typo in the name/signature would otherwise silently create
@@ -25,7 +25,7 @@ class TestEntity : public Entity {
     ++updateCount;
   }
 
-  Vector2 velocity;
+  Vector3 velocity;
   int updateCount = 0;
 };
 
@@ -38,15 +38,15 @@ TEST_CASE("Entity is abstract and cannot be instantiated directly") {
 }
 
 TEST_CASE("Entity starts alive at full health with the given position") {
-  TestEntity e{Vector2{10.0f, 20.0f}, 100};
+  TestEntity e{Vector3{10.0f, 20.0f, 30.0f}, 100};
   CHECK(e.health() == 100);
   CHECK(e.maxHealth() == 100);
   CHECK(e.isAlive());
-  CHECK(e.position() == Vector2{10.0f, 20.0f});
+  CHECK(e.position() == Vector3{10.0f, 20.0f, 30.0f});
 }
 
 TEST_CASE("applyDamage reduces health (normal use)") {
-  TestEntity e{Vector2{}, 100};
+  TestEntity e{Vector3{}, 100};
   e.applyDamage(30);
   CHECK(e.health() == 70);
   CHECK(e.isAlive());
@@ -56,7 +56,7 @@ TEST_CASE("applyDamage reduces health (normal use)") {
 }
 
 TEST_CASE("Damage exceeding remaining health clamps to exactly 0 (boundary)") {
-  TestEntity e{Vector2{}, 50};
+  TestEntity e{Vector3{}, 50};
   e.applyDamage(999);
   CHECK(e.health() == 0);
   CHECK_FALSE(e.isAlive());
@@ -67,14 +67,14 @@ TEST_CASE("Damage exceeding remaining health clamps to exactly 0 (boundary)") {
 }
 
 TEST_CASE("Damage exactly equal to remaining health kills (boundary)") {
-  TestEntity e{Vector2{}, 50};
+  TestEntity e{Vector3{}, 50};
   e.applyDamage(50);
   CHECK(e.health() == 0);
   CHECK_FALSE(e.isAlive());
 }
 
 TEST_CASE("Zero or negative damage is ignored (invalid input)") {
-  TestEntity e{Vector2{}, 100};
+  TestEntity e{Vector3{}, 100};
   e.applyDamage(0);
   CHECK(e.health() == 100);
 
@@ -84,11 +84,11 @@ TEST_CASE("Zero or negative damage is ignored (invalid input)") {
 }
 
 TEST_CASE("Non-positive max health is clamped so the entity is alive (invalid input)") {
-  TestEntity zero{Vector2{}, 0};
+  TestEntity zero{Vector3{}, 0};
   CHECK(zero.isAlive());
   CHECK(zero.health() == 1);
 
-  TestEntity negative{Vector2{}, -40};
+  TestEntity negative{Vector3{}, -40};
   CHECK(negative.isAlive());
   CHECK(negative.health() == 1);
 }
@@ -99,8 +99,8 @@ TEST_CASE("update() is dispatched polymorphically through Entity pointers") {
   // vector goes out of scope (via Entity's virtual destructor).
   std::vector<std::unique_ptr<Entity>> entities;
 
-  auto mover = std::make_unique<TestEntity>(Vector2{0.0f, 0.0f}, 100);
-  mover->velocity = Vector2{2.0f, 0.0f};
+  auto mover = std::make_unique<TestEntity>(Vector3{0.0f, 0.0f, 0.0f}, 100);
+  mover->velocity = Vector3{2.0f, 0.0f, 4.0f};
   TestEntity* raw = mover.get();  // Non-owning view for assertions.
   entities.push_back(std::move(mover));
 
@@ -109,5 +109,5 @@ TEST_CASE("update() is dispatched polymorphically through Entity pointers") {
   }
 
   CHECK(raw->updateCount == 1);
-  CHECK(raw->position() == Vector2{1.0f, 0.0f});
+  CHECK(raw->position() == Vector3{1.0f, 0.0f, 2.0f});
 }

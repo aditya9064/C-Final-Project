@@ -18,14 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # SFML builds from source via FetchContent and needs these system
-      # windowing/X11 dev libraries on Linux runners.
+      # raylib's GLFW backend builds from source via FetchContent and needs
+      # these X11/OpenGL development libraries on Linux runners.
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
+            libxinerama-dev libxkbcommon-dev libasound2-dev \
             libudev-dev libgl1-mesa-dev libfreetype-dev \
             xvfb
 
@@ -39,7 +40,7 @@ jobs:
         working-directory: build
         run: ctest --output-on-failure --build-config Release
 
-      # Linux runners have no display server; SFML window creation needs a
+      # Linux runners have no display server; raylib window creation needs a
       # virtual framebuffer to run the smoke-test executable headlessly.
       - name: Run build smoke test (Linux, headless)
         if: runner.os == 'Linux'
@@ -68,6 +69,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
+            libxinerama-dev libxkbcommon-dev libasound2-dev \
             libudev-dev libgl1-mesa-dev libfreetype-dev
 
       - name: Configure (ASan)

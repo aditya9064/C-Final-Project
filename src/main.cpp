@@ -1,14 +1,14 @@
 // Build/dependency smoke test for Fireteam: Skirmish.
 //
 // This file intentionally does NOT contain gameplay logic yet. Its only
-// job is to prove that SFML (rendering) and ENet (networking) fetch,
+// job is to prove that raylib (3D rendering) and ENet (networking) fetch,
 // compile, and link correctly on a fresh clone -- the "build that works on
 // another computer" requirement. Each teammate's subsystem (engine,
 // rendering, combat, networking) will replace pieces of this as the
 // project grows; see docs/proposal.md for the planned architecture.
 
-#include <SFML/Graphics.hpp>
 #include <enet/enet.h>
+#include <raylib.h>
 
 #include <iostream>
 
@@ -19,20 +19,26 @@ int main() {
   }
   std::cout << "[smoke test] ENet initialized successfully.\n";
 
-  sf::RenderWindow window(sf::VideoMode(640, 480),
-                           "Fireteam: Skirmish - Build Smoke Test");
-  sf::CircleShape placeholderPlayer(50.f);
-  placeholderPlayer.setFillColor(sf::Color::Green);
-  placeholderPlayer.setPosition(295.f, 190.f);
+  InitWindow(800, 600, "Fireteam: Skirmish - 3D Build Smoke Test");
+  Camera3D camera{};
+  camera.position = {4.0f, 4.0f, 4.0f};
+  camera.target = {0.0f, 0.0f, 0.0f};
+  camera.up = {0.0f, 1.0f, 0.0f};
+  camera.fovy = 45.0f;
+  camera.projection = CAMERA_PERSPECTIVE;
 
-  window.clear(sf::Color(30, 30, 30));
-  window.draw(placeholderPlayer);
-  window.display();
-  // Closed immediately: this is a headless-friendly build check, not the
-  // interactive game loop.
-  window.close();
+  BeginDrawing();
+  ClearBackground(RAYWHITE);
+  BeginMode3D(camera);
+  DrawPlane({0.0f, 0.0f, 0.0f}, {20.0f, 20.0f}, LIGHTGRAY);
+  DrawCube({0.0f, 1.0f, 0.0f}, 2.0f, 2.0f, 2.0f, BLUE);
+  DrawCubeWires({0.0f, 1.0f, 0.0f}, 2.0f, 2.0f, 2.0f, DARKBLUE);
+  EndMode3D();
+  DrawText("3D renderer smoke test", 20, 20, 20, DARKGRAY);
+  EndDrawing();
+  CloseWindow();
 
-  std::cout << "[smoke test] SFML window created and rendered successfully.\n";
+  std::cout << "[smoke test] raylib 3D scene rendered successfully.\n";
 
   enet_deinitialize();
   return 0;
