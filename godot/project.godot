@@ -1,0 +1,16 @@
+; Godot 4.7 project for "Fireteam: Skirmish" — rendering/evaluation starter.
+; Open with Godot 4.7.x (standard build). Mechanics are intended to live in
+; C++ via GDExtension (godot-cpp); this starter uses a small GDScript to
+; procedurally assemble a rough arena so the Forward+ renderer can be evaluated.
+
+config_version=5
+
+[application]
+
+config/name="Fireteam: Skirmish (Godot starter)"
+run/main_scene="res://scenes/arena.tscn"
+config/features=PackedStringArray("4.7", "Forward Plus")
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
