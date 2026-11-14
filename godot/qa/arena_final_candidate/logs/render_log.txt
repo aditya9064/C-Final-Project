@@ -1,0 +1,17 @@
+overview: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+topdown: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+overview_b: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+canopy_ground: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+under_canopy: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+teal_spawn: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+orange_spawn: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+cover_tall: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+cover_low: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+firing_port: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+cargo: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+trees: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+landscape: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+walls: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+cover: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+crate: captured=1 cover_pass=5 cover_fail=0 script_errors=0
+cinematic: captured=1 cover_pass=5 cover_fail=0 script_errors=0

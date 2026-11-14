@@ -65,6 +65,12 @@ Full project rationale, scope, and design justification are in the
 > we're not going to fake footage of a game that doesn't exist yet. Check
 > back around Check-in 2 / the readiness check milestone.
 
+What does exist is the **3D arena environment** (Godot, environment only — no
+gameplay yet): screenshots and QA reports are in
+[`godot/qa/arena_final_candidate/`](godot/qa/arena_final_candidate/README.md).
+
+![Arena overview (Godot 4.7, environment only)](godot/qa/arena_final_candidate/final/overview.jpg)
+
 ## Architecture
 
 ### Entity & subsystem design
@@ -194,6 +200,7 @@ flowchart LR
 | Rendering/window/input | [SFML](https://www.sfml-dev.org/) 2.6.2 | Gentle learning curve, strong OOP fit, team's first graphics library |
 | Networking | [ENet](http://enet.bespin.org/) 1.3.18 | Purpose-built for real-time game networking (sequencing/reliability over UDP), much smaller surface than general-purpose async I/O libraries |
 | Testing | [doctest](https://github.com/doctest/doctest) 2.4.11 | Header-only, fast to compile, fast to run in CI |
+| 3D arena environment *(separate project, not yet integrated)* | [Godot](https://godotengine.org/) 4.7 Forward+ + [Blender](https://www.blender.org/) 4.2 asset pipeline | The arena (walls, canopy, standing-vs-crouching cover) is inherently 3D, which SFML cannot render; Godot adds 3D physics raycasts for cover tests and supports C++ via GDExtension. See [docs/rendering-architecture.md](docs/rendering-architecture.md) for the open integration decision. |
 
 ## Getting started
 
@@ -231,13 +238,20 @@ game — see [Roadmap](#roadmap) for what's implemented so far.
 ```
 c-final-project/
 ├── .github/            CI workflow, issue/PR templates
+├── art/references/      Where to put arena concept-art references (images not committed)
 ├── assets/             Game assets (sprites, fonts, sounds) as they're added
-├── docs/                proposal, AI-use log, evidence (tests/memory diagnostics)
+├── docs/                proposal, AI-use log, evidence (tests/memory diagnostics),
+│                        rendering-architecture.md
+├── godot/               Godot 4.7 3D arena environment (standalone project; see godot/README.md)
 ├── include/fireteam/    Public headers
 ├── src/                 Implementation (.cpp)
 ├── tests/                doctest-based test suite
 └── CMakeLists.txt        Build configuration (FetchContent for all dependencies)
 ```
+
+The Godot arena is **not** built by CMake and does not affect `fireteam_skirmish`
+or the tests; it needs only a Godot 4.7 download — see
+[godot/README.md](godot/README.md) for how to run it.
 
 ## Testing
 
@@ -309,6 +323,8 @@ responsibility, not exclusive access.)
 - [Project proposal (PDF)](docs/proposal.pdf) / [source](docs/proposal.md)
 - [AI use log](docs/ai-use-log.md)
 - [Contributing / branching conventions](CONTRIBUTING.md)
+- [Rendering architecture: SFML program vs Godot arena, integration options](docs/rendering-architecture.md)
+- [Godot arena: run, dimensions, cover tests, presets](godot/README.md) · [asset pipeline](godot/pipeline/README.md) · [asset licences](godot/assets/MANIFEST.md) · [QA evidence](godot/qa/arena_final_candidate/README.md)
 
 ## License
 

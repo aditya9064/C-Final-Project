@@ -1,0 +1,10 @@
+[performance] BENCH_FPS: 127.8 view=teal_spawn (300 frames @1600x900, uncapped) worst_frame=13.0ms frames_over_33ms=0
+[performance] BENCH_FPS: 117.3 view=under_canopy (300 frames @1600x900, uncapped) worst_frame=11.6ms frames_over_33ms=0
+[performance] BENCH_FPS: 87.7 view=canopy_ground (300 frames @1600x900, uncapped) worst_frame=17.3ms frames_over_33ms=0
+[performance] BENCH_FPS: 148.3 view=trees (300 frames @1600x900, uncapped) worst_frame=13.5ms frames_over_33ms=0
+[performance] BENCH_FPS: 102.2 view=walls (300 frames @1600x900, uncapped) worst_frame=14.8ms frames_over_33ms=0
+[high] BENCH_FPS: 38.9 view=teal_spawn (300 frames @1600x900, uncapped) worst_frame=35.8ms frames_over_33ms=5
+[high] BENCH_FPS: 38.1 view=under_canopy (300 frames @1600x900, uncapped) worst_frame=52.5ms frames_over_33ms=18
+[high] BENCH_FPS: 36.6 view=canopy_ground (300 frames @1600x900, uncapped) worst_frame=40.7ms frames_over_33ms=19
+[high] BENCH_FPS: 37.1 view=trees (300 frames @1600x900, uncapped) worst_frame=37.8ms frames_over_33ms=15
+[high] BENCH_FPS: 39.2 view=walls (300 frames @1600x900, uncapped) worst_frame=41.1ms frames_over_33ms=6
