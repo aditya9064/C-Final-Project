@@ -1,0 +1,13 @@
+Exterior vegetation & rock models (CommonTree_*, Bush_Common, Fern_1,
+Grass_*, Rock_Medium_*, Pebble_Round_*) are from the
+
+  Stylized Nature MegaKit (FREE / standard version) by Quaternius
+  https://quaternius.com   |   https://opengameart.org/content/stylized-nature-megakit
+
+License: CC0 1.0 Universal (Public Domain Dedication)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+No attribution is legally required (CC0); this note is recorded for provenance.
+Source glTF was re-exported with Blender 4.2 (factory-startup) as .gltf/.bin with the
+kit's textures stored once in textures/ (pipeline/convert_nature.py);
+Bush_Common's foliage is re-tinted green in-engine (its source atlas is autumn-red).
