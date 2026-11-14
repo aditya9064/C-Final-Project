@@ -1,0 +1,7 @@
+{
+  "_comment": "Template only - do not put machine-specific paths here. Local tool paths go in config.local.json (gitignored; written by setup.ps1) or in the environment variables FIRETEAM_BLENDER / FIRETEAM_GODOT. Neither tool is needed to open or run the committed project; they are only needed to regenerate assets (Blender 4.2 LTS) or run the QA capture/benchmark scripts (Godot 4.7 console build).",
+  "blender": "",
+  "blender_version": "4.2.23 LTS",
+  "godot": "",
+  "godot_version": "4.7.x"
+}
