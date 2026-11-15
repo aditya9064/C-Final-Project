@@ -1,0 +1,29 @@
+# Godot 4 editor/import cache — regenerated on first open (or `godot --headless --import`).
+.godot/
+# Exported builds
+/build/
+*.tmp
+
+# Verification screenshots written by `-- --view <name>` (plus the .import Godot adds
+# because it sees a texture). Reviewed copies live in qa/arena_final_candidate/ as JPEGs.
+arena_*.png
+arena_*.png.import
+screenshots/
+
+# Blender outputs that pipeline/gen_*.py rewrite on every run. Only the .gdignore marker
+# is tracked so Godot never tries to import .blend files after a local regeneration.
+assets/blend/*
+!assets/blend/.gdignore
+
+# The nature kit is .gltf + .bin with its textures in assets/models/nature/textures/
+# (tracked). If a .glb is ever imported there, Godot extracts loose PNGs next to it —
+# those would be derived files, so keep them out.
+assets/models/nature/*.png
+assets/models/nature/*.png.import
+
+# Legacy OBJ exports from the first pipeline version; the scene loads .glb only.
+assets/models/*.obj
+assets/models/*.obj.import
+
+# Per-machine tool paths (see pipeline/config.json for the template)
+pipeline/config.local.json

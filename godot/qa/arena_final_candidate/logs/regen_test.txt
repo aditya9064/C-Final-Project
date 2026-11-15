@@ -1,0 +1,81 @@
+# Generator repeatability log
+# Procedure: run gen_assets.py twice, then gen_vegetation.py and gen_terrain.py, and compare
+# MD5 hashes of every GLB before/after (hashes_before_regen.txt / hashes_after_regen.txt).
+# Absolute paths are redacted as <repo> / <scratch>.
+
+########## Run 1 - 2026-11-13, in place (tree_a/b/c, ivy, shrub, terrain, nature = protected)
+##### gen_assets pass 1
+EXPORTED: <repo>/godot/assets/models/crate.glb
+EXPORTED: <repo>/godot/assets/models/case.glb
+EXPORTED: <repo>/godot/assets/models/barrel.glb
+EXPORTED: <repo>/godot/assets/models/sandbag_pile.glb
+EXPORTED: <repo>/godot/assets/models/barrier_low.glb
+EXPORTED: <repo>/godot/assets/models/barrier_tall.glb
+EXPORTED: <repo>/godot/assets/models/barrier_L.glb
+EXPORTED: <repo>/godot/assets/models/spawn_arch.glb
+EXPORTED: <repo>/godot/assets/models/canopy.glb
+EXPORTED: <repo>/godot/assets/models/rock.glb
+ALL_ASSETS_DONE
+##### gen_assets pass 2
+EXPORTED: <repo>/godot/assets/models/crate.glb
+EXPORTED: <repo>/godot/assets/models/case.glb
+EXPORTED: <repo>/godot/assets/models/barrel.glb
+EXPORTED: <repo>/godot/assets/models/sandbag_pile.glb
+EXPORTED: <repo>/godot/assets/models/barrier_low.glb
+EXPORTED: <repo>/godot/assets/models/barrier_tall.glb
+EXPORTED: <repo>/godot/assets/models/barrier_L.glb
+EXPORTED: <repo>/godot/assets/models/spawn_arch.glb
+EXPORTED: <repo>/godot/assets/models/canopy.glb
+EXPORTED: <repo>/godot/assets/models/rock.glb
+ALL_ASSETS_DONE
+##### gen_vegetation
+EXPORTED_TEX: <repo>/godot/textures/foliage/leaf.png
+EXPORTED: <repo>/godot/assets/models/tree_a.glb
+TREE tree_a: 141 branch segs, 247 leaf cards
+EXPORTED: <repo>/godot/assets/models/tree_b.glb
+TREE tree_b: 516 branch segs, 902 leaf cards
+EXPORTED: <repo>/godot/assets/models/tree_c.glb
+TREE tree_c: 44 branch segs, 73 leaf cards
+EXPORTED: <repo>/godot/assets/models/shrub.glb
+EXPORTED: <repo>/godot/assets/models/ivy.glb
+VEGETATION_DONE
+##### gen_terrain
+EXPORTED: <repo>/godot/assets/models/terrain.glb verts= 27789
+TERRAIN_DONE
+##### hash comparison (protected assets must be unchanged by gen_assets)
+ALL 22 PROTECTED ASSET HASHES IDENTICAL
+##### tree_b structure after regen
+      1 "bark"
+      1 "leafmat"
+      2 tree_b_leaves
+      2 tree_b_wood
+69212 barrel.glb
+16356 barrier_L.glb
+8800 barrier_low.glb
+8800 barrier_tall.glb
+84540 canopy.glb
+18960 case.glb
+21484 crate.glb
+8200 ivy.glb
+9712 rock.glb
+249736 sandbag_pile.glb
+12956 shrub.glb
+21224 spawn_arch.glb
+1330964 terrain.glb
+122040 tree_a.glb
+440444 tree_b.glb
+38388 tree_c.glb
+
+########## Run 2 - 2026-11-14, into an empty folder, compared to the committed files
+# gen_assets x2, gen_vegetation, gen_terrain written to <scratch>/regen_iso/models and hashed
+# against godot/assets/models/*.glb in the branch; the MegaKit converter was run twice
+# independently and all 41 output files (.gltf/.bin/textures) compared.
+=== D. asset regeneration in isolated dir (gen_assets x2, gen_vegetation, gen_terrain) Sat Nov 14 00:27:32 CST 2026 ===
+gen_assets exit=0
+gen_assets exit=0
+gen_vegetation exit=0
+gen_terrain exit=0
+--- compare regenerated GLBs to worktree ---
+REGEN_MATCH: all 16 project GLBs byte-identical to regenerated
+--- nature: worktree vs convert run2 ---
+NATURE_MATCH: 41 files identical to independent run
