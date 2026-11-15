@@ -43,6 +43,8 @@ add_library(fireteam_core STATIC
   src/Entity.cpp
   src/Weapon.cpp
   src/Rifle.cpp
+  src/GameWorld.cpp
+  src/GameState.cpp
 )
 # PUBLIC: anyone linking fireteam_core also gets this include path.
 target_include_directories(fireteam_core PUBLIC include)

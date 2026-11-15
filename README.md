@@ -76,7 +76,6 @@ classDiagram
         +Vector2 position
         +int health
         +update()
-        +render()
     }
     class Player {
         +Weapon* weapon
@@ -112,11 +111,12 @@ classDiagram
         +receive()
     }
     class GameWorld {
-        +vector~unique_ptr~Entity~~ entities
+        +entities()
+        +addEntity()
         +update()
     }
 
-    GameWorld "1" o-- "*" Entity : owns
+    GameWorld "1" *-- "*" Entity : owns
     GameWorld --> NetworkManager : uses
 ```
 
@@ -125,6 +125,18 @@ not baked into the player's type) but **inheritance** for the `Entity`
 hierarchy, since polymorphic dispatch over one container of entities is the
 natural fit for a single game-update loop. See
 [docs/proposal.md](docs/proposal.md#3-design-sketch) for the full rationale.
+
+Implemented foundation: `GameWorld` owns entities with `unique_ptr`, updates
+living entities, then removes dead ones. Adding a null entity or updating
+with negative/non-finite elapsed time throws `std::invalid_argument`.
+References to removed entities must not be used after an update.
+The renderer will read entity data rather than calling `Entity::render()`;
+gameplay has no SFML dependency.
+
+`GameState` starts in `MatchPhase::Lobby` and permits only the cycle
+Lobby -> InGame -> MatchOver -> Lobby. Illegal transitions throw
+`std::logic_error` without changing the phase. Player-count checks and
+winner detection are future work in #11, not implemented by this skeleton.
 
 ### Match state machine
 
