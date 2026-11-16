@@ -14,9 +14,9 @@ var _next := 0
 func _ready() -> void:
 	_build_lights(); _build_floor()
 	get_viewport().msaa_3d = Viewport.MSAA_4X
-	_spawn("res://assets/models/characters/male_dressed.glb",
+	_spawn("res://assets/models/characters/male_tailored.glb",
 		"res://assets/models/weapons/smg_teal.glb", Vector3(-0.55, 0, 0))
-	_spawn("res://assets/models/characters/female_dressed.glb",
+	_spawn("res://assets/models/characters/female_tailored.glb",
 		"res://assets/models/weapons/smg_orange.glb", Vector3(0.55, 0, 0))
 	_cam = Camera3D.new(); _cam.fov = 42.0; _cam.current = true; add_child(_cam)
 
@@ -31,8 +31,8 @@ func _spawn(char_path: String, gun_path: String, pos: Vector3) -> void:
 	if skel:
 		var ba := BoneAttachment3D.new(); ba.bone_name = "hand_r"; skel.add_child(ba)
 		var g := (load(gun_path) as PackedScene).instantiate() as Node3D
-		g.position = Vector3(0.0, 0.03, 0.0)
-		g.rotation_degrees = Vector3(0, 90, 10)
+		g.position = Vector3(0.02, 0.03, 0.0)
+		g.rotation_degrees = Vector3(6, 92, 8)
 		g.scale = Vector3.ONE
 		ba.add_child(g)
 

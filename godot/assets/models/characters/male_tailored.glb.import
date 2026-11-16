@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cnc5ka7fxkjo8"
-path="res://.godot/imported/female_dressed.glb-89dc8391772f777c9f8ffa63efae9a21.scn"
+uid="uid://bpmi177v43k3n"
+path="res://.godot/imported/male_tailored.glb-9a1780ecaf0344569c07e9f3a3318947.scn"
 
 [deps]
 
-source_file="res://assets/models/characters/female_dressed.glb"
-dest_files=["res://.godot/imported/female_dressed.glb-89dc8391772f777c9f8ffa63efae9a21.scn"]
+source_file="res://assets/models/characters/male_tailored.glb"
+dest_files=["res://.godot/imported/male_tailored.glb-9a1780ecaf0344569c07e9f3a3318947.scn"]
 
 [params]
 

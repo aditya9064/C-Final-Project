@@ -2,7 +2,7 @@ extends Node3D
 # Headless diagnostic: character height, gun length, animation loop modes.
 
 func _ready() -> void:
-	var c := (load("res://assets/models/characters/male_dressed.glb") as PackedScene).instantiate()
+	var c := (load("res://assets/models/characters/male_tailored.glb") as PackedScene).instantiate()
 	add_child(c)
 	var aabb := _merged_aabb(c)
 	print("CHAR native AABB size: ", aabb.size, "  height(Y)=", aabb.size.y)

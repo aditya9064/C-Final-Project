@@ -18,7 +18,7 @@ func _ready() -> void:
 	_build_lights()
 	_build_floor()
 	get_viewport().msaa_3d = Viewport.MSAA_4X
-	_char = (load("res://assets/models/characters/male_dressed.glb") as PackedScene).instantiate()
+	_char = (load("res://assets/models/characters/male_tailored.glb") as PackedScene).instantiate()
 	# native height ~1.86m (verified) -> no rescale needed
 	add_child(_char)
 	_anim = _find(_char, "AnimationPlayer")
