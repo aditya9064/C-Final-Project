@@ -2,8 +2,11 @@
 
 Autonomous work within an agreed bar. Budget **$0** — only free CC0 assets + free tools
 (Blender 4.2, Godot 4.7). Arena, lighting, C++/multiplayer untouched. Branch
-`feature/characters`, **local commits only — nothing pushed/merged**. **Awaiting the user's
-visual approval.**
+`feature/characters`, **local commits only — nothing pushed/merged**.
+
+> **VISUAL APPROVAL GRANTED by the user, 2026-11-16** (at the 75–85% bar). Still **not pushed or
+> merged** (needs separate approval) and **gameplay integration not started** (awaiting the user's
+> go-ahead).
 
 > **Quality target (user, 2026-11-16):** ~**75–85% resemblance** to the reference is enough —
 > clean, attractive, recognizable, game-ready; not a perfect match. Small differences in
