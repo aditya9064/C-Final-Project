@@ -59,8 +59,10 @@ Honest residual differences (all within the "acceptable" list the user set):
 - Female hair is a neat pulled-back ponytail but shorter/simpler than the reference's long sweep.
 - Fabric is smooth (no modeled folds); pouches/holster are simple blocks.
 
-No bespoke rifle animation was authored — the user dropped that requirement this pass; the CC0 pistol
-two-hand stance is reused with the corrected forward gun orientation.
+No bespoke rifle animation was authored — the current brief omits it. Aim/fire/reload reuse the CC0
+pistol-style two-hand stance (support hand near the grip rather than out on a foregrip, stock not
+shouldered) with the corrected forward gun orientation. Hi-top sneakers rebuilt as a flat toe-box +
+thin sole (the earlier faceted toe-ball is gone); all procedural spheres now smooth-shaded.
 
 ## Reproduce
 ```

@@ -385,8 +385,10 @@ def add_cube(name, loc, size, mt, rot=None, smooth=False):
     for p in o.data.polygons: p.use_smooth = smooth
     return o
 def add_sphere(name, loc, r, mt):
-    bpy.ops.mesh.primitive_uv_sphere_add(location=loc, radius=r, segments=20, ring_count=12)
-    o = bpy.context.active_object; o.name = name; o.data.materials.append(mt); return o
+    bpy.ops.mesh.primitive_uv_sphere_add(location=loc, radius=r, segments=24, ring_count=14)
+    o = bpy.context.active_object; o.name = name; o.data.materials.append(mt)
+    for p in o.data.polygons: p.use_smooth = True   # smooth: no faceted balls (toe caps, shoulder caps, hood)
+    return o
 def add_torus(name, loc, major, minor, mt, rot=None):
     bpy.ops.mesh.primitive_torus_add(location=loc, major_radius=major, minor_radius=minor,
                                      major_segments=28, minor_segments=12)
@@ -468,11 +470,14 @@ def build_kit():
     for side in ("l", "r"):
         ft = pos(f"foot_{side}"); ba = pos(f"ball_{side}")
         mid = Vector(((ft.x+ba.x)/2, (ft.y+ba.y)/2, FLOOR + 0.020))
-        sole = add_cube(f"sole_{side}", mid, Vector((0.105, 0.30, 0.040)), SOLE); bind_single(sole, f"foot_{side}")
+        # white sole: a thin slab under the foot (pulled back so it doesn't protrude past the toe)
+        sole = add_cube(f"sole_{side}", Vector((mid.x, mid.y - FY*0.015, FLOOR + 0.018)),
+                        Vector((0.102, 0.255, 0.036)), SOLE); bind_single(sole, f"foot_{side}")
         gp = add_cube(f"snk_grey_{side}", Vector((ft.x, ft.y + FY*0.02, FLOOR+0.085)), Vector((0.095, 0.16, 0.05)), SNKGRY)
         bind_single(gp, f"foot_{side}")
-        toe = add_sphere(f"toe_{side}", Vector((ba.x, ba.y + FY*0.055, FLOOR+0.055)), 0.05, SNEAK)
-        toe.scale = Vector((1.15, 1.5, 1.0)); bpy.ops.object.transform_apply(scale=True); bind_single(toe, f"ball_{side}")
+        # toe box: a low, flat, wide rounded cap in the dark upper colour (not a proud grey ball)
+        toe = add_cube(f"toe_{side}", Vector((ba.x, ba.y + FY*0.045, FLOOR+0.044)),
+                       Vector((0.098, 0.085, 0.072)), SNEAK, smooth=True); bind_single(toe, f"ball_{side}")
         acc = add_cube(f"snk_acc_{side}", Vector((ft.x, ft.y + FY*0.075, FLOOR+0.10)), Vector((0.08, 0.05, 0.022)), ACCM)
         bind_single(acc, f"foot_{side}")
     shoes.parent = arm; shoes.modifiers.new("arm", 'ARMATURE').object = arm
