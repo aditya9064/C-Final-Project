@@ -115,16 +115,18 @@ def build_smg(accent_rgb, name):
     def add(o, m):
         assign(o, m); parts.append(o); return o
 
-    # --- main body: one chunky mass, dark lower + silver upper fused (two-tone split) ---
-    add(cube((0.34, 0.060, 0.080), (0.02, 0, 0.004), "recv_lo"), DARK)      # full-height dark body
-    add(cube((0.30, 0.052, 0.048), (0.00, 0, 0.026), "recv_up"), GREY)      # silver overlaps upper half
-    add(cube((0.09, 0.053, 0.026), (0.090, 0, 0.030), "recv_cut"), DARK)    # dark cut-line on silver
-    add(cube((0.05, 0.054, 0.024), (-0.080, 0, 0.028), "ejport"), DARK)     # ejection port
+    # --- main body: silver upper DOMINANT + dark lower strip (two-tone like the ref) ---
+    add(cube((0.34, 0.058, 0.045), (0.02, 0, -0.020), "recv_lo"), DARK)     # dark lower strip
+    add(cube((0.33, 0.064, 0.066), (0.00, 0, 0.030), "recv_up"), GREY)      # big silver receiver
+    add(cube((0.085, 0.066, 0.068), (0.150, 0, 0.030), "recv_cut"), DARK)   # dark front section (two-tone break)
+    add(cube((0.05, 0.066, 0.030), (-0.090, 0, 0.034), "ejport"), DARK)     # ejection port / rear dark
 
-    # --- short handguard forward (dark) + vents ------------------------
-    add(cube((0.11, 0.056, 0.052), (0.235, 0, -0.004), "handguard"), DARK)
-    for sx in (0.20, 0.235, 0.27):
-        add(cube((0.022, 0.058, 0.010), (sx, 0, 0.010), "vent"), GREY)
+    # --- short grey handguard forward + M-LOK slots (dark recesses) ----
+    add(cube((0.12, 0.056, 0.052), (0.235, 0, 0.000), "handguard"), GREY)
+    for sx in (0.205, 0.240, 0.275):
+        for sy in (0.0295, -0.0295):
+            add(cube((0.022, 0.004, 0.026), (sx, sy, 0.000), "mlok_s"), DARK)   # side slots
+        add(cube((0.022, 0.044, 0.005), (sx, 0, 0.027), "mlok_t"), DARK)        # top slot
 
     # --- short barrel + muzzle brake (front) ---------------------------
     add(cyl(0.011, 0.07, (0.315, 0, 0.012), "barrel", axis='X'), STEEL)
@@ -137,10 +139,12 @@ def build_smg(accent_rgb, name):
         add(cube((0.007, 0.019, 0.013), (x, 0, 0.057), "tooth"), DARK)
         x += 0.016
 
-    # --- red-dot optic (dark body, teal top cap, glass lens) -----------
-    add(cube((0.052, 0.032, 0.032), (-0.005, 0, 0.078), "optic_base"), DARK)
-    add(cube((0.048, 0.030, 0.008), (-0.005, 0, 0.098), "optic_top"), ACC)
-    add(cyl(0.015, 0.008, (0.018, 0, 0.078), "optic_lens", axis='X'), GLASS)
+    # --- red-dot optic: round tube sight on a mount (dark body, glass lens, accent top) ---
+    add(cube((0.034, 0.024, 0.020), (0.000, 0, 0.068), "optic_mount"), DARK)      # mount block
+    add(cyl(0.020, 0.062, (0.004, 0, 0.094), "optic_tube", axis='X', verts=20), DARK)  # round housing
+    add(cyl(0.0205, 0.007, (0.036, 0, 0.094), "optic_lensF", axis='X', verts=20), GLASS)# front lens
+    add(cyl(0.0205, 0.007, (-0.028, 0, 0.094), "optic_lensR", axis='X', verts=20), DARK)# rear
+    add(cube((0.034, 0.008, 0.008), (0.004, 0, 0.116), "optic_acc"), ACC)         # accent top strip
 
     # --- angled pistol grip + trigger guard ----------------------------
     add(cube((0.040, 0.046, 0.125), (-0.045, 0, -0.072), "grip", roty=18), DARK)

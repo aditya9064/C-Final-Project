@@ -31,8 +31,8 @@ func _spawn(char_path: String, gun_path: String, pos: Vector3) -> void:
 	if skel:
 		var ba := BoneAttachment3D.new(); ba.bone_name = "hand_r"; skel.add_child(ba)
 		var g := (load(gun_path) as PackedScene).instantiate() as Node3D
-		g.position = Vector3(0.02, 0.03, 0.0)
-		g.rotation_degrees = Vector3(0, 0, 0)
+		g.position = Vector3(0.0, 0.0, 0.0)
+		g.rotation_degrees = Vector3(-0.89, -94.88, -78.76)  # solved: barrel forward+level, optic up
 		g.scale = Vector3.ONE
 		ba.add_child(g)
 

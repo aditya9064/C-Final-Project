@@ -3,10 +3,12 @@ Fireteam: Skirmish — character asset provenance
 
 The two operative characters (male_tailored.glb = Teal team, female_tailored.glb =
 Orange team) are built from CC0 (public-domain) assets by Quaternius, customized
-locally with Blender (pipeline/tailor_character.py, which models real garment geometry
-+ tactical gear onto the rig). No paid assets, subscriptions, or AI-generation services
-were used. (Earlier pipelines assemble_character.py / dress_character.py are kept for
-history; their outputs male_rigged/male_dressed/female_dressed were superseded.)
+locally with Blender. The current pipeline is pipeline/tailor2.py, which LOFTS each
+garment as its own clean tube (regular topology, materials by ring/segment index) over
+the CC0 rig, slims the hidden body inside the garments, and transfers rig weights so
+everything deforms with the animations. No paid assets, subscriptions, or AI-generation
+services were used. (Earlier pipelines tailor_character.py / dress_character.py are kept
+for history; their painted/body-derived outputs were superseded.)
 
 Source assets (all CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/):
 
