@@ -1,67 +1,66 @@
-# Characters & Weapons Phase — Status (2026-11-16)
+# Characters & Weapons Phase — Status (2026-11-16, pass #3)
 
-Autonomous work. Budget **$0** — only free CC0 assets + free tools (Blender 4.2, Godot 4.7).
-Arena, lighting, C++/multiplayer untouched. Branch `feature/characters`, **local commits only —
-nothing pushed/merged**. **NOT approved yet; not claiming a match.**
+Autonomous work within an agreed bar. Budget **$0** — only free CC0 assets + free tools
+(Blender 4.2, Godot 4.7). Arena, lighting, C++/multiplayer untouched. Branch
+`feature/characters`, **local commits only — nothing pushed/merged**. **Awaiting the user's
+visual approval.**
 
+> **Quality target (user, 2026-11-16):** ~**75–85% resemblance** to the reference is enough —
+> clean, attractive, recognizable, game-ready; not a perfect match. Small differences in
+> hairstyle, fabric folds, accessories and facial features are acceptable.
+>
 > **Primary spec:** `art/references/fireteam_character_reference.png` (gitignored; preserved via the
-> side-by-sides in `docs/evidence/char-ref-compare/`). Judge every change against it.
+> side-by-sides in `docs/evidence/char-ref-compare/`).
 
-## What changed this pass (reference rebuild #2)
-The previous version painted material regions onto the *reshaped muscular body* (plus a noise
-displace), which could never produce clean fabric — hence the jagged white patches the review
-flagged. **New pipeline `pipeline/tailor2.py` builds each garment as its own lofted mesh** (rings
-along the bone axes, regular topology), so:
-- Materials assign by **(ring, segment) index** → clean panels, seams and accent strips, **never
-  jagged islands**. The jagged-patch defect is gone.
-- The **garment radii set the silhouette**; the hidden muscular body is **slimmed inside the
-  garments** (no poke-through) and darkened (no hollow peek). Custom split normals are cleared so
-  no muscle shading bleeds onto visible skin.
-- Corrections to the spec I had wrong before: **sleeves are light-grey** (not charcoal — only the
-  ribbed cuffs are darker), and the **hoodie is open over a dark tee** (a dark front V), not a
-  closed zipped bib.
+## What changed this pass (#3) — the face fix + sleeve/brightness corrections
+The headline bug was the **dark blue-grey faces**. Root cause (confirmed by introspection, not
+guessed): the base body's head vertex group is named **`Head` (capital H)**, but the skin selector
+in `process_body()` tested `startswith("head")` — so **every head polygon failed the skin test and
+fell through to the dark "tee" material** (0.075, 0.078, 0.088 ≈ blue-grey). The face was never skin
+at all. Fixes:
+- **Case-insensitive skin selector** (`vdom[v].lower()`), so the head routes to the skin material.
+- **Fair/light skin material.** The only shipped base texture is the **"Dark" variant**, so we use a
+  fresh flat warm tone `(0.72, 0.44, 0.33)` instead of inheriting the base material. The **eyes and
+  eyebrows are separate meshes** that survive export, so the face keeps real features (eyes, brows,
+  nose, mouth) — a natural fair-skinned face, not blue/grey/metallic/pale.
+- **Darker sleeves** (user request): sleeve tubes + shoulder caps now use a charcoal `SLEEVE`
+  material `(0.135, 0.14, 0.15)`, so the arms read dark from the shoulder down (raglan) against the
+  light-grey torso. (This supersedes the earlier "sleeves are light-grey" note.)
+- **Hoodie brightness**: torso albedo lowered `0.44 → 0.34` so under the bright arena sun it lands as
+  **light grey, not blown-out white** (verified in-engine).
 
-Pieces: lofted hoodie (light-grey body + sleeves, dark-tee collar V, team zipper, ribbed cuffs,
-shoulder caps, back hood) · lofted cargo joggers (ankle cuffs, team thigh dash, knee pads) · hip
-bridge closing the crotch · H-harness (front straps + chest buckle + back X) · belt, pouches,
-thigh holster · fingerless-glove cuffs · grey/white hi-top sneakers. **Female is distinct:** narrower
-shoulders, bust/waist shaping, **pulled-back scalp hair + high ponytail + face-framing bangs** (not
-the male parted hair), slim goggles, orange accents.
+Everything else from pass #2 is retained: lofted clean-topology garments (no jagged patches), hip
+bridge closing the crotch, H-harness + back X, belt/pouches/thigh holster, fingerless-glove cuffs,
+knee pads, grey/white hi-top sneakers, team zipper + thigh dash, female pulled-back ponytail + bangs
++ slim goggles. Male = brown tousled hair + teal; female = clearly feminine + orange.
 
-**Weapon** (`pipeline/gen_weapons.py`): silver-dominant two-tone receiver, **round red-dot optic**,
-slotted (M-LOK) grey handguard, muzzle brake, angled mag + team baseplate, triangular skeleton
-stock + team butt, team receiver dashes.
+**Weapon** (`pipeline/gen_weapons.py`, unchanged this pass): silver-dominant two-tone receiver, round
+red-dot optic, slotted grey handguard, muzzle brake, angled mag + team baseplate, skeleton stock.
 
-**Gun orientation (P6):** solved numerically from the `hand_r` pose, not guessed —
-`rotation_degrees = (-0.89, -94.88, -78.76)` points the barrel **forward and level** (optic up).
-Verified in-engine across aim/fire/reload/run. (The earlier "fixed" `(0,0,0)` was wrong — it pointed
-the muzzle across the body; this is the correction.) Applied in `preview.gd`/`duo.gd`/`character_check.gd`.
+**Gun orientation:** `rotation_degrees = (-0.89, -94.88, -78.76)` — barrel **forward and level**,
+solved from the `hand_r` pose. Verified across aim/fire/reload. Applied in
+`preview.gd`/`duo.gd`/`character_check.gd`.
 
-## Regression (verified in Godot)
-All **12 clips** intact with correct loop modes; garments deform cleanly through walk/run/jump/
-aim/fire/reload with no poke-through; female ponytail swings. Evidence in
-`docs/evidence/char-ref-compare/`: `compare_{male,female}_FINAL.png` (ref beside render, front/side/
-back), `compare_weapon_FINAL.png`, `anim_poses_FINAL.png`, `compare_male_baseline.png` (where it started).
+## Regression (verified in Godot, arena lighting)
+All **12 clips** present; **all 8 requested anims tested** — idle, walk, run, jump, aim, fire,
+reload, death — garments deform cleanly, gun points forward in aim/fire, female ponytail reads from
+side/back, no poke-through. Evidence in `docs/evidence/char-ref-compare/`:
+`compare_{male,female}_FINAL.png` (ref beside render, front/side/back), `anim_poses_FINAL.png`
+(all clips), `compare_weapon_FINAL.png`, `compare_male_baseline.png` (where it started).
 
-## What still differs from the reference — honest, NOT approval-ready
-- **Proportions:** the CC0 base is ~6.7 heads and stocky; the reference is ~7.5–8 heads, taller and
-  leaner. Garments are leaner now but the frame is still stockier than the sheet.
-- **Faces:** the baked CC0 base faces (androgynous), not the sheet's distinct young male / female.
-  This is a **hard limit of the base mesh** — procedural work cannot fix it. The female now reads
-  distinct by *silhouette and hair*, not by face.
-- **Hoodie value** blows a little bright under the game sky (reads near-white vs the ref's light grey).
-- **Two-handed grip:** the gun orientation is correct, but the hands still use the CC0 **pistol**
-  stances — the support hand sits near the grip, not out on the foregrip, and the stock is not
-  shouldered. **No dedicated rifle aim/reload animation has been authored yet** (P6 remainder).
-- Fabric is smooth (no modeled folds); accessories (pouches/holster) are simple blocks.
+## Assessment against the 75–85% bar
+**Meets it, in my judgment.** Faces are natural fair-skinned and distinct (male youthful, female
+feminine); outfit, silhouette, team colours, gear and weapon all read clearly against the reference.
 
-## Recommended next step for the face/proportion ceiling (needs a decision)
-Procedural modeling on this base cannot deliver the reference faces or its taller lean frame. The
-genuinely-free option worth evaluating is **MakeHuman / MPFB2** (CC0 output) as a *mesh source* for
-lean, distinct male/female bodies + faces + hair, then transferring our existing 65-bone rig's
-weights onto them (keeping the 12 animations). It needs a one-time **download** (addon + assets) —
-a permission gate — and carries weight-transfer risk. Flagged for the user to approve or decline;
-not pursued unilaterally.
+Honest residual differences (all within the "acceptable" list the user set):
+- Proportions are a touch stockier than the reference's tall lean frame (CC0 base limit).
+- Faces are the stylized base geometry (not a bespoke likeness) — now correctly toned and featured.
+- The open-collar dark-tee reads as two short bars rather than a clean zip V; minor.
+- Female hair is a neat pulled-back ponytail but shorter/simpler than the reference's long sweep.
+- Fabric is smooth (no modeled folds); pouches/holster are simple blocks.
+
+No bespoke rifle animation was authored — the user dropped that requirement this pass; the CC0 pistol
+two-hand stance is reused with the corrected forward gun orientation.
 
 ## Reproduce
 ```
@@ -70,5 +69,5 @@ blender -b --factory-startup -P pipeline/tailor2.py -- \
   <out>/male_tailored.glb 0.015 0.52 0.50 m      # female: Superhero_Female + 0.92 0.42 0.06 + f
 blender -b --factory-startup -P pipeline/gen_weapons.py -- assets/models
 ```
-Harness: `pipeline/ortho_render.py` + `pipeline/compose.py`. Godot: `scenes/{preview,duo,diag}.tscn`.
-Do not integrate gameplay until the appearance is approved.
+Previews: Godot `scenes/preview.tscn` → `previews/*.png`; sheets via `pipeline/compose.py` vs
+`ref_crops/`. Do not integrate gameplay until the appearance is approved.

@@ -26,7 +26,8 @@ def mat(name, rgb, rough=0.82, metal=0.0):
     b.inputs["Metallic"].default_value = metal
     return m
 
-HOOD   = mat("hoodie",   (0.44, 0.45, 0.475), 0.9)   # light grey hoodie (kept off pure white so it won't blow out)
+HOOD   = mat("hoodie",   (0.34, 0.35, 0.37), 0.9)    # light grey hoodie (albedo kept down so arena light lands ~light-grey, not white)
+SLEEVE = mat("sleeve",   (0.135, 0.14, 0.15), 0.88)  # darker charcoal sleeves (user: "darker sleeves")
 CUFF   = mat("cuff",     (0.235, 0.245, 0.265), 0.87) # ribbed cuffs / collar edge (mid grey)
 TEE    = mat("tee",      (0.075, 0.078, 0.088), 0.9) # dark tee under the open collar
 PANTS  = mat("pants",    (0.085, 0.088, 0.10), 0.9)  # dark charcoal cargo joggers
@@ -49,7 +50,9 @@ bpy.ops.import_scene.gltf(filepath=BASE)
 arm = next(o for o in bpy.data.objects if o.type == 'ARMATURE')
 meshes = [o for o in bpy.data.objects if o.type == 'MESH']
 body = max(meshes, key=lambda o: len(o.data.vertices))
-SKINM = body.data.materials[0] if len(body.data.materials) else mat("skin", (0.76, 0.58, 0.48), 0.6)
+# Natural fair/light skin (the only shipped base texture is the "Dark" variant, so we use a
+# fresh flat tone; the eyes + eyebrows are separate meshes that survive and give the face features).
+SKINM = mat("skin", (0.72, 0.44, 0.33), 0.5)
 
 grp = {vg.index: vg.name for vg in body.vertex_groups}
 def dom_name(v):
@@ -206,7 +209,7 @@ def build_sleeve(side):
         ri, si = rof[i], sof[i]
         if ri >= nres - 1: fm.append(1)  # CUFF
         else: fm.append(0)               # HOOD light
-    ob = make(f"Sleeve_{side}", verts, faces, [HOOD, CUFF, ACCM], fm)
+    ob = make(f"Sleeve_{side}", verts, faces, [SLEEVE, CUFF, ACCM], fm)  # darker charcoal sleeves
     # accent stripe along the OUTER-TOP of the upper arm (clean longitudinal strip)
     me = ob.data
     for i, p in enumerate(me.polygons):
@@ -336,7 +339,7 @@ def process_body():
     FING = ("thumb", "index", "middle", "ring", "pinky")
     is_hand = lambda d: d.startswith("hand") or d.startswith(FING)
     for f in body.data.polygons:
-        doms = [vdom[v] for v in f.vertices]
+        doms = [vdom[v].lower() for v in f.vertices]   # lower(): base group is "Head" (capital)
         skn = sum(1 for d in doms if d.startswith(SKN))
         hnd = sum(1 for d in doms if is_hand(d))
         leg = sum(1 for d in doms if d.startswith(("thigh", "calf")))
@@ -402,13 +405,14 @@ def build_kit():
     bmesh.ops.delete(bmh, geom=kill, context='VERTS'); bmh.to_mesh(hood.data); bmh.free()
     bind_transfer(hood)
 
-    # shoulder caps: cover the deltoid gap between the torso tube and each sleeve (light grey).
+    # shoulder caps: cover the deltoid gap between the torso tube and each sleeve.
+    # SLEEVE colour so the arm reads charcoal from the shoulder down (raglan seam).
     # smaller/narrower on the female so the shoulders don't read as pads.
     capR = 0.092 if M else 0.066
     for side, s in (("l", -1), ("r", 1)):
         sh = pos(f"upperarm_{side}"); cl = pos(f"clavicle_{side}")
         cap_pt = sh.lerp(cl, 0.30 if M else 0.45) + Vector((0, 0, 0.015))
-        cap = add_sphere(f"shldcap_{side}", cap_pt, capR, HOOD)
+        cap = add_sphere(f"shldcap_{side}", cap_pt, capR, SLEEVE)
         cap.scale = Vector((1.05, 1.0, 0.8)); bpy.ops.object.transform_apply(scale=True)
         bind_transfer(cap)
 
