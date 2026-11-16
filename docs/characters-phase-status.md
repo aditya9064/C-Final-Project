@@ -16,13 +16,24 @@ and C++/multiplayer code were **not modified**. Work is on branch `feature/chara
 - **Rigged, animated characters in Godot:** `male_dressed.glb` (Teal) and
   `female_dressed.glb` (Orange), built by `pipeline/assemble_character.py` +
   `pipeline/dress_character.py`:
-  - Realistic **athletic** base bodies (not blocky), ~14k tris, 65-bone humanoid rig.
-  - Brown hair; grey/charcoal tactical suit with team-colour (teal/orange) accents and
-    a light-grey chest panel.
+  - Realistic **athletic** base bodies (not blocky), ~14k tris, 65-bone humanoid rig,
+    **native height 1.86 m** (verified in-engine) — rendered at true 1:1 scale, no rescale.
+  - Brown hair + brown eyebrows; uniform charcoal tactical suit with team-colour
+    (teal/orange) forearm accents and dark boots.
   - 12 animation clips bundled per character, **no retargeting needed** (base and
-    animation library share the identical skeleton).
-  - Each SMG attaches to the `hand_r` bone (`BoneAttachment3D`) and moves with the rig.
+    animation library share the identical skeleton). Cyclic clips loop correctly in-engine
+    (idle/walk/run/jog/aim_idle/jump → `loop_mode=LINEAR`; one-shots stay non-looping).
+  - Each SMG attaches to the `hand_r` bone (`BoneAttachment3D`) at true size and moves
+    with the rig.
   - Rendered front/side/back (`duo_front/side/back.png`, `char_*.png`).
+
+### Corrected this session (bugs found via in-engine diagnostics)
+- **Scale:** an earlier `0.63` scale (from a bad Blender bbox) shrank characters to 1.17 m
+  and made the gun look oversized. Measured true height = 1.86 m → scale set to 1.0.
+- **Looping:** cyclic clips had imported with `loop_mode=0`. Godot's glTF importer only
+  loops clips whose name ends `_loop` (which it then strips), so the pipeline now names
+  cyclic actions `idle_loop`/`walk_loop`/… → import as clean `idle`/`walk`/… that loop.
+- **White eyebrows:** base eyebrow mesh shipped white → now tinted to hair brown.
 
 ### Animation coverage (requirement: idle/walk/run/jump/aim/fire/reload/death)
 | Required | Status | Source clip |
@@ -36,11 +47,17 @@ and C++/multiplayer code were **not modified**. Work is on branch `feature/chara
 
 ## Remaining work / known limitations (honest)
 
-1. **Outfit fidelity:** current clothing is a *fitted tactical suit* (recoloured body
-   shell), not yet the concept's **baggy hoodie + cargo pants + utility pouches +
-   chest straps + knee pads + gloves + boots**. Those are added geometry and are the
-   main remaining modelling task. The female torso accent is currently patchy and needs
-   cleaner material regions.
+1. **Outfit fidelity (main remaining task):** current clothing is a *recoloured, slightly
+   inflated shell of the body* — a fitted tactical **suit**, not the concept's **baggy
+   hoodie + cargo pants + utility pouches + chest straps + knee pads + gloves + boots**.
+   The shell reads clean from the front/back but shows seam/boundary artifacts from the
+   side (it self-intersects at concave areas) and the accent zones are segment-aligned,
+   not garment-shaped. Detailed tactical gear is a dedicated **modelling** task (not a
+   recolour) — the three realistic options are: (a) accept the stylized suit for now and
+   move to gameplay integration; (b) model/weight real garment geometry onto the rig;
+   (c) source a CC0 base that already ships clothed (likely needs retargeting, since the
+   current base was chosen precisely because it shares the animation skeleton). **This is
+   the decision point to confirm before more outfit work.**
 2. **Rifle aim/fire/reload:** only one-handed pistol motions exist for free. Plan:
    derive two-handed rifle aim/fire/reload by scripting the left (support) arm onto the
    SMG foregrip over the pistol timing. Mixamo was excluded (requires an Adobe login).

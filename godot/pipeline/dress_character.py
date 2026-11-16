@@ -27,6 +27,12 @@ bpy.ops.import_scene.gltf(filepath=BASE)
 arm = next(o for o in bpy.data.objects if o.type == 'ARMATURE')
 meshes = [o for o in bpy.data.objects if o.type == 'MESH']
 body = max(meshes, key=lambda o: len(o.data.vertices))
+# tint eyebrows to match hair (they ship white on the base mesh set)
+for mm in meshes:
+    if "brow" in mm.name.lower() or any("brow" in (s.material.name.lower() if s.material else "")
+                                        for s in mm.material_slots):
+        mm.data.materials.clear()
+        mm.data.materials.append(mat("brow_brown", (0.10, 0.06, 0.03), 0.8))
 
 # --- build clothing shell from the body ---
 bpy.ops.object.select_all(action='DESELECT')
@@ -55,10 +61,11 @@ def dom(v):
 vdom = [dom(v) for v in clothes.data.vertices]
 
 def region(name):
+    # Minimal clean zones: one uniform suit colour, team-colour forearms, dark boots.
+    # (Finer zones produced speckle/seams on the organic mesh; detailed garments are a
+    # modelling task, not a recolour — see docs/characters-phase-status.md.)
     if name.startswith(("foot", "ball")): return "boots"
-    if name.startswith(("pelvis", "thigh", "calf")): return "pants"
-    if name.startswith(("clavicle", "lowerarm")): return "accent"
-    if name.startswith(("spine_02", "spine_03")): return "panel"   # chest panel
+    if name.startswith("lowerarm"): return "accent"        # team-colour forearms/cuffs
     return "hoodie"
 
 bm = bmesh.new(); bm.from_mesh(clothes.data)
@@ -96,10 +103,12 @@ for hm in hair_meshes:
     hm.parent = arm
 
 # --- animations (transfer from UAL by matching bone names) ---
-MAP = {'Idle_Loop': 'idle', 'Walk_Loop': 'walk', 'Sprint_Loop': 'run', 'Jog_Fwd_Loop': 'jog',
-       'Jump_Start': 'jump_start', 'Jump_Loop': 'jump_loop', 'Jump_Land': 'jump_land',
-       'Death01': 'death', 'Pistol_Aim_Neutral': 'aim', 'Pistol_Shoot': 'fire',
-       'Pistol_Reload': 'reload', 'Pistol_Idle_Loop': 'aim_idle'}
+# Cyclic clips keep a '_loop' suffix: Godot's glTF importer strips it and sets the loop
+# flag, so e.g. 'idle_loop' imports as clip "idle" with loop_mode=LINEAR (one-shots stay).
+MAP = {'Idle_Loop': 'idle_loop', 'Walk_Loop': 'walk_loop', 'Sprint_Loop': 'run_loop',
+       'Jog_Fwd_Loop': 'jog_loop', 'Jump_Start': 'jump_start', 'Jump_Loop': 'jump_loop',
+       'Jump_Land': 'jump_land', 'Death01': 'death', 'Pistol_Aim_Neutral': 'aim',
+       'Pistol_Shoot': 'fire', 'Pistol_Reload': 'reload', 'Pistol_Idle_Loop': 'aim_idle_loop'}
 before = set(bpy.data.objects)
 bpy.ops.import_scene.gltf(filepath=UAL)
 ual_objs = [o for o in bpy.data.objects if o not in before]

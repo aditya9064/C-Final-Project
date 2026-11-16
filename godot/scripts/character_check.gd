@@ -8,9 +8,9 @@ var _anim: AnimationPlayer
 var _char: Node3D
 # [frame_to_capture, cam_pos, label]
 var _shots := [
-	[70, Vector3(0.0, 0.95, 2.6), "front"],
-	[110, Vector3(2.6, 0.95, 0.0), "side"],
-	[150, Vector3(0.0, 0.95, -2.6), "back"],
+	[70, Vector3(0.0, 1.05, 4.2), "front"],
+	[110, Vector3(4.2, 1.05, 0.0), "side"],
+	[150, Vector3(0.0, 1.05, -4.2), "back"],
 ]
 var _next := 0
 
@@ -19,7 +19,7 @@ func _ready() -> void:
 	_build_floor()
 	get_viewport().msaa_3d = Viewport.MSAA_4X
 	_char = (load("res://assets/models/characters/male_dressed.glb") as PackedScene).instantiate()
-	_char.scale = Vector3(0.63, 0.63, 0.63)   # ~2.8m import -> ~1.78m
+	# native height ~1.86m (verified) -> no rescale needed
 	add_child(_char)
 	_anim = _find(_char, "AnimationPlayer")
 	if _anim:
@@ -39,7 +39,7 @@ func _ready() -> void:
 		# rough seat of the grip into the hand (refined later)
 		gun.position = Vector3(0.0, 0.03, 0.0)
 		gun.rotation_degrees = Vector3(0, 90, 10)
-		gun.scale = Vector3(1.0, 1.0, 1.0) / 0.63   # cancel the character down-scale so the gun keeps real size
+		gun.scale = Vector3.ONE   # character is at true 1:1 scale, gun keeps its real size
 		ba.add_child(gun)
 		print("HAND_R bone idx:", skel.find_bone("hand_r"))
 	else:
@@ -81,7 +81,7 @@ func _process(_dt: float) -> void:
 	_frame += 1
 	if _next < _shots.size() and _frame >= int(_shots[_next][0]):
 		_cam.global_position = _shots[_next][1]
-		_cam.look_at(Vector3(0.0, 0.92, 0.0), Vector3.UP)
+		_cam.look_at(Vector3(0.0, 1.0, 0.0), Vector3.UP)
 		# capture next frame so the camera move applies
 		if _frame >= int(_shots[_next][0]) + 1:
 			var img := get_viewport().get_texture().get_image()

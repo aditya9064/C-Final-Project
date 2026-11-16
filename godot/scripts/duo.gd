@@ -5,9 +5,9 @@ extends Node3D
 var _frame := 0
 var _cam: Camera3D
 var _shots := [
-	[70, Vector3(0.0, 1.0, 3.3), "duo_front"],
-	[110, Vector3(3.3, 1.0, 0.2), "duo_side"],
-	[150, Vector3(0.0, 1.0, -3.3), "duo_back"],
+	[70, Vector3(0.0, 1.05, 5.4), "duo_front"],
+	[110, Vector3(5.4, 1.05, 0.3), "duo_side"],
+	[150, Vector3(0.0, 1.05, -5.4), "duo_back"],
 ]
 var _next := 0
 
@@ -22,8 +22,7 @@ func _ready() -> void:
 
 func _spawn(char_path: String, gun_path: String, pos: Vector3) -> void:
 	var c := (load(char_path) as PackedScene).instantiate() as Node3D
-	c.scale = Vector3(0.63, 0.63, 0.63)
-	c.position = pos
+	c.position = pos   # native height ~1.86m -> no rescale
 	add_child(c)
 	var ap := _find(c, "AnimationPlayer") as AnimationPlayer
 	if ap and ap.has_animation("idle"):
@@ -34,7 +33,7 @@ func _spawn(char_path: String, gun_path: String, pos: Vector3) -> void:
 		var g := (load(gun_path) as PackedScene).instantiate() as Node3D
 		g.position = Vector3(0.0, 0.03, 0.0)
 		g.rotation_degrees = Vector3(0, 90, 10)
-		g.scale = Vector3.ONE / 0.63
+		g.scale = Vector3.ONE
 		ba.add_child(g)
 
 func _find(n: Node, cls: String) -> Node:
@@ -62,7 +61,7 @@ func _process(_dt: float) -> void:
 	_frame += 1
 	if _next < _shots.size() and _frame >= int(_shots[_next][0]):
 		_cam.global_position = _shots[_next][1]
-		_cam.look_at(Vector3(0.0, 0.95, 0.0), Vector3.UP)
+		_cam.look_at(Vector3(0.0, 1.0, 0.0), Vector3.UP)
 		if _frame >= int(_shots[_next][0]) + 1:
 			var img := get_viewport().get_texture().get_image()
 			img.save_png("res://%s.png" % _shots[_next][2])
