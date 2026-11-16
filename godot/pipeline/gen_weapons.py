@@ -115,54 +115,54 @@ def build_smg(accent_rgb, name):
     def add(o, m):
         assign(o, m); parts.append(o); return o
 
-    # --- receiver (two-tone block) -------------------------------------
-    add(cube((0.26, 0.055, 0.052), (0.00, 0, 0.000), "recv_lo"), DARK)
-    add(cube((0.215, 0.050, 0.034), (-0.005, 0, 0.043), "recv_up"), GREY)
-    # ejection-port detail (small dark inset on grey)
-    add(cube((0.06, 0.052, 0.022), (0.05, 0, 0.040), "ejport"), DARK)
+    # --- main body: one chunky mass, dark lower + silver upper fused (two-tone split) ---
+    add(cube((0.34, 0.060, 0.080), (0.02, 0, 0.004), "recv_lo"), DARK)      # full-height dark body
+    add(cube((0.30, 0.052, 0.048), (0.00, 0, 0.026), "recv_up"), GREY)      # silver overlaps upper half
+    add(cube((0.09, 0.053, 0.026), (0.090, 0, 0.030), "recv_cut"), DARK)    # dark cut-line on silver
+    add(cube((0.05, 0.054, 0.024), (-0.080, 0, 0.028), "ejport"), DARK)     # ejection port
 
-    # --- top Picatinny rail + teeth ------------------------------------
-    add(cube((0.21, 0.020, 0.010), (0.015, 0, 0.066), "rail"), DARK)
-    x = -0.07
+    # --- short handguard forward (dark) + vents ------------------------
+    add(cube((0.11, 0.056, 0.052), (0.235, 0, -0.004), "handguard"), DARK)
+    for sx in (0.20, 0.235, 0.27):
+        add(cube((0.022, 0.058, 0.010), (sx, 0, 0.010), "vent"), GREY)
+
+    # --- short barrel + muzzle brake (front) ---------------------------
+    add(cyl(0.011, 0.07, (0.315, 0, 0.012), "barrel", axis='X'), STEEL)
+    add(cube((0.045, 0.030, 0.030), (0.350, 0, 0.012), "muzzle"), STEEL)
+
+    # --- top rail (on silver) + teeth ----------------------------------
+    add(cube((0.17, 0.018, 0.010), (0.04, 0, 0.055), "rail"), DARK)
+    x = -0.03
     while x < 0.12:
-        add(cube((0.008, 0.021, 0.014), (x, 0, 0.068), "tooth"), DARK)
-        x += 0.018
+        add(cube((0.007, 0.019, 0.013), (x, 0, 0.057), "tooth"), DARK)
+        x += 0.016
 
-    # --- red-dot optic -------------------------------------------------
-    add(cube((0.055, 0.030, 0.030), (-0.015, 0, 0.088), "optic_base"), DARK)
-    add(cyl(0.021, 0.034, (-0.015, 0, 0.104), "optic_tube", axis='X'), DARK)
-    add(cyl(0.016, 0.006, (-0.001, 0, 0.104), "optic_lens", axis='X'), GLASS)
+    # --- red-dot optic (dark body, teal top cap, glass lens) -----------
+    add(cube((0.052, 0.032, 0.032), (-0.005, 0, 0.078), "optic_base"), DARK)
+    add(cube((0.048, 0.030, 0.008), (-0.005, 0, 0.098), "optic_top"), ACC)
+    add(cyl(0.015, 0.008, (0.018, 0, 0.078), "optic_lens", axis='X'), GLASS)
 
-    # --- handguard (front) + M-LOK slots -------------------------------
-    add(cube((0.17, 0.050, 0.050), (0.205, 0, -0.002), "handguard"), DARK)
-    for sx in (0.16, 0.205, 0.25):
-        add(cube((0.028, 0.054, 0.012), (sx, 0, 0.004), "mlok"), GREY)
+    # --- angled pistol grip + trigger guard ----------------------------
+    add(cube((0.040, 0.046, 0.125), (-0.045, 0, -0.072), "grip", roty=18), DARK)
+    add(cube((0.070, 0.044, 0.010), (0.000, 0, -0.035), "guard_bot"), DARK)
+    add(cube((0.010, 0.044, 0.028), (0.032, 0, -0.030), "guard_fr"), DARK)
 
-    # --- barrel + muzzle ----------------------------------------------
-    add(cyl(0.012, 0.16, (0.345, 0, 0.012), "barrel", axis='X'), STEEL)
-    add(cyl(0.019, 0.055, (0.415, 0, 0.012), "muzzle", axis='X'), STEEL)
-    add(cyl(0.020, 0.012, (0.447, 0, 0.012), "muzzle_tip", axis='X'), ACC)
+    # --- chunky angled magazine + teal baseplate -----------------------
+    add(cube((0.055, 0.048, 0.150), (0.055, 0, -0.088), "mag", roty=-8), DARK)
+    add(cube((0.060, 0.050, 0.024), (0.070, 0, -0.160), "mag_base"), ACC)
 
-    # --- pistol grip (angled) + trigger guard --------------------------
-    add(cube((0.042, 0.048, 0.135), (-0.045, 0, -0.082), "grip", roty=16), DARK)
-    add(cube((0.075, 0.044, 0.010), (-0.005, 0, -0.035), "guard_bot"), DARK)
-    add(cube((0.010, 0.044, 0.030), (0.030, 0, -0.030), "guard_fr"), DARK)
+    # --- triangular skeleton stock (rear) ------------------------------
+    add(cube((0.165, 0.020, 0.016), (-0.215, 0, 0.044), "stock_top"), DARK)
+    add(cube((0.180, 0.020, 0.016), (-0.205, 0, -0.004), "stock_diag", roty=17), DARK)
+    add(cube((0.018, 0.046, 0.095), (-0.295, 0, 0.022), "butt"), ACC)       # teal butt pad
 
-    # --- magazine (angled fwd) + accent base ---------------------------
-    add(cube((0.050, 0.044, 0.150), (0.040, 0, -0.085), "mag", roty=-9), DARK)
-    add(cube((0.055, 0.048, 0.022), (0.052, 0, -0.158), "mag_base"), ACC)
-
-    # --- skeleton stock (rear) -----------------------------------------
-    add(cube((0.150, 0.020, 0.014), (-0.195, 0, 0.028), "stock_top"), DARK)
-    add(cube((0.120, 0.020, 0.014), (-0.180, 0, -0.030), "stock_bot", roty=-12), DARK)
-    add(cube((0.018, 0.045, 0.095), (-0.262, 0, 0.000), "butt"), ACC)
-
-    # --- accent side stripes on the receiver ---------------------------
-    for sy in (0.028, -0.028):
-        add(cube((0.11, 0.006, 0.016), (0.02, sy, 0.012), "stripe"), ACC)
+    # --- teal accent dashes on the silver receiver side ----------------
+    for sy in (0.031, -0.031):
+        add(cube((0.050, 0.004, 0.013), (0.060, sy, 0.018), "dash1", roty=34), ACC)
+        add(cube((0.032, 0.004, 0.011), (0.097, sy, 0.028), "dash2", roty=34), ACC)
 
     for o in parts:
-        if o.name.startswith(("recv", "handguard", "grip", "mag", "butt", "optic_base")):
+        if o.name.startswith(("recv", "handguard", "grip", "mag", "butt", "optic_base", "muzzle")):
             bevel(o, 0.004, 1)
 
     gun = join(parts, name)

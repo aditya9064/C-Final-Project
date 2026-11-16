@@ -38,7 +38,7 @@ func _ready() -> void:
 		var gun := (load("res://assets/models/weapons/smg_teal.glb") as PackedScene).instantiate() as Node3D
 		# rough seat of the grip into the hand (refined later)
 		gun.position = Vector3(0.0, 0.03, 0.0)
-		gun.rotation_degrees = Vector3(0, 90, 10)
+		gun.rotation_degrees = Vector3(0, 0, 0)
 		gun.scale = Vector3.ONE   # character is at true 1:1 scale, gun keeps its real size
 		ba.add_child(gun)
 		print("HAND_R bone idx:", skel.find_bone("hand_r"))

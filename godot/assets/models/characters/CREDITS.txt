@@ -28,8 +28,10 @@ License note: The live pack pages showed the CC0 badge on 2026-11-15 (download d
 recorded here for provenance). No attribution is legally required under CC0; this
 note is kept as good practice.
 
-Weapons (smg_teal.glb / smg_orange.glb) are original, generated procedurally in
-Blender via pipeline/gen_weapons.py (no third-party assets).
+Weapons (smg_teal.glb / smg_orange.glb) are original compact carbines, generated
+procedurally in Blender via pipeline/gen_weapons.py (no third-party assets): fused
+two-tone receiver, red-dot optic + top rail, angled magazine, triangular skeleton
+stock, muzzle brake, and team-colour accent panels, matched to the turnaround sheet.
 
 Skeleton: all three Quaternius packs share the identical 65-bone UE/Quaternius
 humanoid rig, so animations apply with no retargeting (hand_r / hand_l bones carry

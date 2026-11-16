@@ -17,7 +17,9 @@ var _shots := [
 	["death", 1.3, Vector3(3.9, 0.8, 0.6), 0.5, "death_side"],
 	["reload", 0.8, Vector3(0.0, 1.05, 3.6), 1.1, "reload_front"],
 	["aim", 0.12, Vector3(0.7, 1.2, 3.6), 1.25, "aim_front"],
+	["aim", 0.12, Vector3(3.8, 1.25, 0.5), 1.25, "aim_side"],
 	["fire", 0.3, Vector3(0.7, 1.2, 3.6), 1.25, "fire_front"],
+	["reload", 0.8, Vector3(3.8, 1.1, 0.5), 1.1, "reload_side"],
 ]
 var _si := -1
 var _i := 0
@@ -48,7 +50,7 @@ func _load_subject() -> void:
 		var ba := BoneAttachment3D.new(); ba.bone_name = "hand_r"; skel.add_child(ba)
 		var g := (load(s[1]) as PackedScene).instantiate() as Node3D
 		g.position = Vector3(0.02, 0.03, 0.0)
-		g.rotation_degrees = Vector3(6, 92, 8)
+		g.rotation_degrees = Vector3(0, 0, 0)   # hand_r already orients the barrel forward
 		ba.add_child(g)
 	_i = -1
 	_next_shot()
