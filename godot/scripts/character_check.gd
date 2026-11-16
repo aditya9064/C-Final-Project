@@ -18,12 +18,12 @@ func _ready() -> void:
 	_build_lights()
 	_build_floor()
 	get_viewport().msaa_3d = Viewport.MSAA_4X
-	_char = (load("res://assets/models/characters/male_rigged.glb") as PackedScene).instantiate()
+	_char = (load("res://assets/models/characters/male_dressed.glb") as PackedScene).instantiate()
 	_char.scale = Vector3(0.63, 0.63, 0.63)   # ~2.8m import -> ~1.78m
 	add_child(_char)
 	_anim = _find(_char, "AnimationPlayer")
 	if _anim:
-		var want := "idle_Armature"
+		var want := "idle"
 		if not _anim.has_animation(want):
 			want = _anim.get_animation_list()[0]
 		_anim.play(want)
