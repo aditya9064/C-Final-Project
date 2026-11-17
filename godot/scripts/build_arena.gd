@@ -77,6 +77,12 @@ const VERTS := [
 const WALL_H := 4.5      # perimeter wall height (m)
 const WALL_T := 0.45     # perimeter wall thickness (m)
 
+# QA mode (default) builds the standalone showcase: debug flythrough camera,
+# test-human figures, and cover raycast self-tests. A playable scene (game.tscn)
+# sets this false BEFORE add_child so the arena is just geometry + lighting and
+# the local player keeps its own camera.
+@export var qa_mode: bool = true
+
 var _mat := {}            # name -> Material cache
 var _sun: DirectionalLight3D
 var _cam: Camera3D
@@ -96,13 +102,15 @@ func _ready() -> void:
 	_build_spawns()
 	_build_obstacles()
 	_build_outer_trees()
-	_build_test_humans()
+	if qa_mode:
+		_build_test_humans()
 	_build_lighting()
-	_setup_camera()
+	if qa_mode:
+		_setup_camera()
 	_apply_preset()
 
 func _physics_process(_d: float) -> void:
-	if not _tests_done:
+	if qa_mode and not _tests_done:
 		_tests_done = true
 		_run_cover_tests()
 

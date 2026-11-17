@@ -59,12 +59,16 @@ func _process(_d: float) -> void:
 		var c := _cam()
 		var fwd := -c.global_transform.basis.z; fwd.y = 0; fwd = fwd.normalized()
 		_along = Vector2(disp.x, disp.z).normalized().dot(Vector2(fwd.x, fwd.z))
-		print("PLAY_MOVE disp=", disp, " along_cam_fwd=", _along)
+		# Team 0 (teal) spawns facing +X (inward); W must move it toward +X in WORLD
+		# space, and the camera must sit behind it (not looking out of the arena).
+		print("PLAY_MOVE disp=", disp, " along_cam_fwd=", _along, " world_dx=", disp.x)
 		Input.action_press("aim")  # now aim so the character faces camera-forward
 	elif _frames == 85:
 		await RenderingServer.frame_post_draw
 		var img := get_viewport().get_texture().get_image()
 		img.save_png(_out + "/play_thirdperson.png")
-		var ok := _along > 0.7
-		print("PLAY_CHECK ", "PASS" if ok else "FAIL", " (moved along camera forward=", _along, ")")
+		var disp2 := _p.global_position - _start
+		var ok := _along > 0.7 and disp2.x > 0.1
+		print("PLAY_CHECK ", "PASS" if ok else "FAIL",
+			" along_cam_fwd=", _along, " world_dx=", disp2.x)
 		get_tree().quit(0 if ok else 1)

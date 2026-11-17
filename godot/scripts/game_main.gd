@@ -8,7 +8,9 @@ const ORANGE_SPAWN := Vector3(18, 1.2, 0)
 
 func _ready() -> void:
 	FireteamInput.ensure_actions()
-	add_child(load("res://scenes/arena.tscn").instantiate())
+	var arena: Node = load("res://scenes/arena.tscn").instantiate()
+	arena.qa_mode = false  # playable: no debug camera / test humans / cover tests
+	add_child(arena)
 	# Local player: teal (male). A non-local orange (female) stands opposite as a
 	# reference until networking spawns real remote players.
 	_spawn(0, TEAL_SPAWN, true)

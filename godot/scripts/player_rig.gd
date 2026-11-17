@@ -43,12 +43,15 @@ func _ready() -> void:
 	_build_anim_tree()
 	_attach_weapon()
 	# Face the arena centre at spawn (teal at -X faces +X, orange at +X faces -X).
+	# The MODEL forward is +Z and the CAMERA forward is -Z, so the camera yaw must
+	# be the model's facing yaw + PI to sit BEHIND the player looking the same way.
 	if spawn_face_inward:
 		var inward := 1.0 if team_id == 0 else -1.0
-		_yaw = atan2(inward, 0.0)
-		set_yaw(_yaw)
+		var face_yaw := atan2(inward, 0.0)
+		set_yaw(face_yaw)
 		if _model:
-			_model.rotation.y = _yaw
+			_model.rotation.y = face_yaw
+		_yaw = face_yaw + PI
 	if is_local:
 		_build_camera()
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -97,9 +100,10 @@ func _attach_weapon() -> void:
 	skel.add_child(att)
 	var wps := load(WEAPON_GLB.get(team_id, WEAPON_GLB[0])) as PackedScene
 	var smg := wps.instantiate()
-	# Starting offset; tuned by screenshot. Grip sits in the palm, barrel forward.
-	smg.position = Vector3(0.0, 0.02, 0.0)
-	smg.rotation = Vector3(0, 0, 0)
+	# Solved SMG mount from the approved showcase scenes (duo.gd / preview.gd,
+	# commit 655874d "fix gun yaw"): grip in palm, barrel forward + level, optic up.
+	smg.position = Vector3.ZERO
+	smg.rotation_degrees = Vector3(-0.89, -94.88, -78.76)
 	att.add_child(smg)
 
 func _build_camera() -> void:
