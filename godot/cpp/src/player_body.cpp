@@ -22,6 +22,8 @@ void PlayerBody::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_ammo"), &PlayerBody::get_ammo);
     ClassDB::bind_method(D_METHOD("get_magazine_size"), &PlayerBody::get_magazine_size);
     ClassDB::bind_method(D_METHOD("get_team"), &PlayerBody::get_team);
+    ClassDB::bind_method(D_METHOD("get_walk_speed"), &PlayerBody::get_walk_speed);
+    ClassDB::bind_method(D_METHOD("get_run_speed"), &PlayerBody::get_run_speed);
     ClassDB::bind_method(D_METHOD("is_reloading"), &PlayerBody::is_reloading);
     ClassDB::bind_method(D_METHOD("get_reload_progress"), &PlayerBody::get_reload_progress);
     ClassDB::bind_method(D_METHOD("get_respawn_remaining"), &PlayerBody::get_respawn_remaining);
@@ -83,6 +85,8 @@ int PlayerBody::get_health() const { return model_ ? model_->health() : 0; }
 int PlayerBody::get_ammo() const { return model_ ? model_->ammo() : 0; }
 int PlayerBody::get_magazine_size() const { return model_ ? model_->magazineSize() : 0; }
 int PlayerBody::get_team() const { return model_ ? (int)model_->team() : 0; }
+float PlayerBody::get_walk_speed() const { return fireteam::Player::kWalkSpeed; }
+float PlayerBody::get_run_speed() const { return fireteam::Player::kRunSpeed; }
 bool PlayerBody::is_reloading() const { return model_ ? model_->isReloading() : false; }
 float PlayerBody::get_reload_progress() const { return model_ ? model_->reloadProgress() : 1.0f; }
 float PlayerBody::get_respawn_remaining() const { return model_ ? model_->respawnRemaining() : 0.0f; }

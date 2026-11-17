@@ -59,6 +59,8 @@ public:
     int get_ammo() const;
     int get_magazine_size() const;
     int get_team() const;
+    float get_walk_speed() const;   // single source for the rig's anim thresholds
+    float get_run_speed() const;
     bool is_reloading() const;
     float get_reload_progress() const;
     float get_respawn_remaining() const;
