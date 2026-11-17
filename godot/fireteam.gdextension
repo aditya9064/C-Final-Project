@@ -1,0 +1,18 @@
+[configuration]
+entry_symbol = "fireteam_library_init"
+compatibility_minimum = "4.7"
+
+[libraries]
+windows.debug.x86_64 = "res://cpp/bin/fireteam.dll"
+windows.release.x86_64 = "res://cpp/bin/fireteam.dll"
+; macOS entries are configured but built in CI / by the Mac teammate -- NOT
+; verified on the Windows dev machine. godot-cpp is cross-platform, so these are
+; expected to work once built; treat as unverified until a Mac build runs.
+macos.debug = "res://cpp/bin/fireteam.dylib"
+macos.release = "res://cpp/bin/fireteam.dylib"
+
+[dependencies]
+; Shipped beside the DLL; without it Godot reports "Missing dependencies:
+; libwinpthread-1.dll" (spike-confirmed).
+windows.debug.x86_64 = { "res://cpp/bin/libwinpthread-1.dll" : "" }
+windows.release.x86_64 = { "res://cpp/bin/libwinpthread-1.dll" : "" }
