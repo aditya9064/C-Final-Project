@@ -42,19 +42,36 @@ func _ready() -> void:
 	_build_model()
 	_build_anim_tree()
 	_attach_weapon()
-	# Face the arena centre at spawn (teal at -X faces +X, orange at +X faces -X).
-	# The MODEL forward is +Z and the CAMERA forward is -Z, so the camera yaw must
-	# be the model's facing yaw + PI to sit BEHIND the player looking the same way.
-	if spawn_face_inward:
-		var inward := 1.0 if team_id == 0 else -1.0
-		var face_yaw := atan2(inward, 0.0)
-		set_yaw(face_yaw)
-		if _model:
-			_model.rotation.y = face_yaw
-		_yaw = face_yaw + PI
+	_face_inward()
+	# The C++ PlayerBody emits "respawned" after an authoritative rebuild; reset
+	# the view + animation then (the body already repositioned itself).
+	connect("respawned", _on_respawned)
 	if is_local:
 		_build_camera()
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _face_inward() -> void:
+	# Face the arena centre (teal at -X faces +X, orange at +X faces -X). The MODEL
+	# forward is +Z and the CAMERA forward is -Z, so the camera yaw is the model's
+	# facing yaw + PI to sit BEHIND the player looking the same way.
+	if not spawn_face_inward:
+		return
+	var inward := 1.0 if team_id == 0 else -1.0
+	var face_yaw := atan2(inward, 0.0)
+	set_yaw(face_yaw)
+	if _model:
+		_model.rotation.y = face_yaw
+	_yaw = face_yaw + PI
+	_pitch = -0.2
+
+func _on_respawned() -> void:
+	_fire_timer = 0.0
+	_aiming = false
+	_face_inward()
+	if is_local:
+		_update_camera()
+	if _playback:
+		_playback.travel("idle")
 
 func _build_model() -> void:
 	var ps := load(CHAR_GLB.get(team_id, CHAR_GLB[0])) as PackedScene

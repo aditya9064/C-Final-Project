@@ -282,7 +282,7 @@ func _process(delta: float) -> void:
 			_respawn_sub.text = "Respawning in %d" % int(ceil(_player.get_respawn_remaining()))
 		elif dead_stuck:
 			_respawn_title.text = "ELIMINATED"
-			_respawn_sub.text = "waiting for respawn (not wired yet)"
+			_respawn_sub.text = "waiting for respawn"
 
 	if _world != null and is_instance_valid(_world):
 		_timer_label.text = _format_time(_world.get_match_time())

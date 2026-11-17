@@ -18,6 +18,7 @@ void PlayerBody::_bind_methods() {
     ClassDB::bind_method(D_METHOD("request_jump"), &PlayerBody::request_jump);
     ClassDB::bind_method(D_METHOD("request_fire"), &PlayerBody::request_fire);
     ClassDB::bind_method(D_METHOD("request_reload"), &PlayerBody::request_reload);
+    ClassDB::bind_method(D_METHOD("respawn"), &PlayerBody::respawn);
     ClassDB::bind_method(D_METHOD("apply_damage", "amount"), &PlayerBody::apply_damage);
     ClassDB::bind_method(D_METHOD("get_health"), &PlayerBody::get_health);
     ClassDB::bind_method(D_METHOD("get_max_health"), &PlayerBody::get_max_health);
@@ -32,13 +33,29 @@ void PlayerBody::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_respawn_remaining"), &PlayerBody::get_respawn_remaining);
     ClassDB::bind_method(D_METHOD("is_awaiting_respawn"), &PlayerBody::is_awaiting_respawn);
     ClassDB::bind_method(D_METHOD("get_planar_velocity"), &PlayerBody::get_planar_velocity);
+
+    ADD_SIGNAL(MethodInfo("respawned"));
+}
+
+void PlayerBody::build_model_() {
+    fireteam::Team t = (team_ == 1) ? fireteam::Team::Orange : fireteam::Team::Teal;
+    model_ = std::make_unique<fireteam::Player>(
+        t, fireteam::Vector2{(float)spawn_.x, (float)spawn_.z});
+    set_global_position(spawn_);
+    vertical_ = 0.0;
+    intent_ = Vector2();
+    want_jump_ = false;
 }
 
 void PlayerBody::setup(int team, Vector3 spawn) {
-    fireteam::Team t = (team == 1) ? fireteam::Team::Orange : fireteam::Team::Teal;
-    model_ = std::make_unique<fireteam::Player>(t, fireteam::Vector2{(float)spawn.x, (float)spawn.z});
-    set_global_position(spawn);
-    vertical_ = 0.0;
+    team_ = team;
+    spawn_ = spawn;
+    build_model_();
+}
+
+void PlayerBody::respawn() {
+    build_model_();            // fresh Player = full health + ammo, alive, at spawn
+    emit_signal("respawned");  // rig resets camera + animation
 }
 
 void PlayerBody::set_move_intent(Vector2 planar_dir) { intent_ = planar_dir; }

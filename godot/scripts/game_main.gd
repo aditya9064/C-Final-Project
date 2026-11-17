@@ -25,6 +25,12 @@ func _ready() -> void:
 	_local = _spawn(0, TEAL_SPAWN, true)
 	_spawn(1, ORANGE_SPAWN, false)
 
+	# Host-side respawn authority (single-player). In multiplayer this node is NOT
+	# added on clients -- the server authorizes respawns instead.
+	var authority := RespawnAuthority.new()
+	add_child(authority)
+	authority.watch(_local)
+
 	var hud: Node = load("res://scenes/hud.tscn").instantiate()
 	add_child(hud)
 	hud.bind(_local, _world)
