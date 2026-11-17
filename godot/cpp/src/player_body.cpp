@@ -18,7 +18,10 @@ void PlayerBody::_bind_methods() {
     ClassDB::bind_method(D_METHOD("request_jump"), &PlayerBody::request_jump);
     ClassDB::bind_method(D_METHOD("request_fire"), &PlayerBody::request_fire);
     ClassDB::bind_method(D_METHOD("request_reload"), &PlayerBody::request_reload);
+    ClassDB::bind_method(D_METHOD("apply_damage", "amount"), &PlayerBody::apply_damage);
     ClassDB::bind_method(D_METHOD("get_health"), &PlayerBody::get_health);
+    ClassDB::bind_method(D_METHOD("get_max_health"), &PlayerBody::get_max_health);
+    ClassDB::bind_method(D_METHOD("is_ready_to_respawn"), &PlayerBody::is_ready_to_respawn);
     ClassDB::bind_method(D_METHOD("get_ammo"), &PlayerBody::get_ammo);
     ClassDB::bind_method(D_METHOD("get_magazine_size"), &PlayerBody::get_magazine_size);
     ClassDB::bind_method(D_METHOD("get_team"), &PlayerBody::get_team);
@@ -45,6 +48,7 @@ void PlayerBody::request_jump() { want_jump_ = true; }
 
 bool PlayerBody::request_fire() { return model_ ? model_->fire() : false; }
 void PlayerBody::request_reload() { if (model_) model_->reload(); }
+void PlayerBody::apply_damage(int amount) { if (model_) model_->applyDamage(amount); }
 
 void PlayerBody::_physics_process(double delta) {
     // Engine-called virtual: catch everything so a C++ exception never unwinds
@@ -82,6 +86,8 @@ void PlayerBody::_physics_process(double delta) {
 }
 
 int PlayerBody::get_health() const { return model_ ? model_->health() : 0; }
+int PlayerBody::get_max_health() const { return fireteam::Player::kMaxHealth; }
+bool PlayerBody::is_ready_to_respawn() const { return model_ ? model_->readyToRespawn() : false; }
 int PlayerBody::get_ammo() const { return model_ ? model_->ammo() : 0; }
 int PlayerBody::get_magazine_size() const { return model_ ? model_->magazineSize() : 0; }
 int PlayerBody::get_team() const { return model_ ? (int)model_->team() : 0; }

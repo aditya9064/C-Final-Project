@@ -11,12 +11,15 @@ var _frames := 0
 var _start := Vector3.ZERO
 var _along := 0.0
 var _out := "user://review"
+var _team := 0
 
 func _ready() -> void:
 	var a := OS.get_cmdline_user_args()
 	for i in a.size():
 		if a[i] == "--out" and i + 1 < a.size():
 			_out = a[i + 1]
+		elif a[i] == "--team" and i + 1 < a.size():
+			_team = int(a[i + 1])
 	DirAccess.make_dir_recursive_absolute(_out)
 	FireteamInput.ensure_actions()
 
@@ -39,7 +42,7 @@ func _ready() -> void:
 	mi.mesh = pm; mi.position = Vector3(0, 0.5, 0); fb.add_child(mi); add_child(fb)
 
 	_p = load("res://scenes/player.tscn").instantiate()
-	_p.team_id = 0
+	_p.team_id = _team
 	_p.is_local = true
 	_p.position = Vector3(0, 1.0, 0)
 	add_child(_p)
@@ -68,7 +71,9 @@ func _process(_d: float) -> void:
 		var img := get_viewport().get_texture().get_image()
 		img.save_png(_out + "/play_thirdperson.png")
 		var disp2 := _p.global_position - _start
-		var ok := _along > 0.7 and disp2.x > 0.1
+		# team 0 (teal) faces +X inward -> W increases x; team 1 (orange) faces -X.
+		var want_sign := 1.0 if _team == 0 else -1.0
+		var ok := _along > 0.7 and disp2.x * want_sign > 0.1
 		print("PLAY_CHECK ", "PASS" if ok else "FAIL",
-			" along_cam_fwd=", _along, " world_dx=", disp2.x)
+			" team=", _team, " along_cam_fwd=", _along, " world_dx=", disp2.x)
 		get_tree().quit(0 if ok else 1)

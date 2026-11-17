@@ -52,10 +52,23 @@ public:
     bool request_fire();     // true if a round left the muzzle (no hit calc here)
     void request_reload();
 
+    // Damage sink for combat (#8/#9): a node-level entry point that forwards to
+    // the model's applyDamage(). How Khushal's hit detection delivers damage is
+    // his design -- either this bound method on the resolved target node, or the
+    // core path Weapon::fire(Entity&) against model() below. Hit DETECTION and
+    // damage VALUES stay in #8/#9; the HUD harness uses this to exercise the bar.
+    void apply_damage(int amount);
+
+    // Unbound (C++-only) access to the engine-agnostic model, so combat's
+    // Weapon::fire(fireteam::Entity&) can target the core Player directly.
+    fireteam::Player *model() const { return model_.get(); }
+
     void _physics_process(double delta) override;
 
     // ---- read-only state for the HUD (#7) ----
     int get_health() const;
+    int get_max_health() const;
+    bool is_ready_to_respawn() const;  // dead + countdown elapsed, nothing respawned it yet
     int get_ammo() const;
     int get_magazine_size() const;
     int get_team() const;
