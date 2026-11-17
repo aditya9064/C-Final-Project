@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://fireteamgameshot1"]
-
-[ext_resource type="Script" path="res://scripts/game_shot.gd" id="1_shot"]
-
-[node name="GameShot" type="Node3D"]
-script = ExtResource("1_shot")
