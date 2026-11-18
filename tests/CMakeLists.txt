@@ -13,6 +13,10 @@ add_executable(fireteam_tests
   test_networking_example.cpp
   test_vector2.cpp
   test_vector3.cpp
+  test_player.cpp
+  test_network_protocol.cpp
+  test_network_manager.cpp
+  test_match_session.cpp
   test_entity.cpp
   test_game_world.cpp
   test_game_state.cpp

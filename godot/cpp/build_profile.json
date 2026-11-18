@@ -1,0 +1,7 @@
+{
+  "enabled_classes": [
+    "Node3D", "CharacterBody3D", "KinematicCollision3D", "CollisionShape3D", "CapsuleShape3D",
+    "MeshInstance3D", "CapsuleMesh", "StandardMaterial3D", "Camera3D",
+    "Input", "InputEvent", "InputEventMouseMotion", "SceneTree", "Engine", "OS"
+  ]
+}

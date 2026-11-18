@@ -12,7 +12,11 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
 
 include(FetchContent)
 
+option(FIRETEAM_BUILD_LEGACY_SMOKE "Build the earlier raylib dependency smoke test" OFF)
+option(FIRETEAM_BUILD_GODOT "Build the C++ Godot gameplay extension" ON)
+
 # --- raylib: 3D rendering, window, input --------------------------------
+if(FIRETEAM_BUILD_LEGACY_SMOKE)
 FetchContent_Declare(
   raylib
   GIT_REPOSITORY https://github.com/raysan5/raylib.git
@@ -20,6 +24,8 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE
 )
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(raylib)
+endif()
 
 # --- ENet: lightweight UDP networking for real-time multiplayer ---------
 FetchContent_Declare(
@@ -29,7 +35,8 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE
 )
 
-FetchContent_MakeAvailable(raylib enet)
+FetchContent_MakeAvailable(enet)
+set_target_properties(enet PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # --- Game logic library ----------------------------------------------------
 # Everything that is NOT main() lives here, so the executable and the test
@@ -40,17 +47,28 @@ add_library(fireteam_core STATIC
   src/Vector2.cpp
   src/Vector3.cpp
   src/Entity.cpp
+  src/Player.cpp
+  src/NetworkProtocol.cpp
+  src/NetworkManager.cpp
+  src/MatchSession.cpp
   src/GameWorld.cpp
   src/GameState.cpp
 )
 # PUBLIC: anyone linking fireteam_core also gets this include path.
 target_include_directories(fireteam_core PUBLIC include)
+set_target_properties(fireteam_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(fireteam_core PUBLIC ${enet_SOURCE_DIR}/include)
+target_link_libraries(fireteam_core PUBLIC enet)
+if(WIN32)
+  target_link_libraries(fireteam_core PUBLIC ws2_32 winmm)
+endif()
 
 # --- Smoke-test executable ------------------------------------------------
 # This is a minimal build/dependency check, NOT the game itself. It proves
 # raylib (rendering) and ENet (networking) are fetched, compiled, and linked
 # correctly on a fresh clone/CI runner. Real game source will replace/extend
 # this as subsystems (engine, rendering, combat, networking) land.
+if(FIRETEAM_BUILD_LEGACY_SMOKE)
 add_executable(fireteam_skirmish src/main.cpp)
 target_include_directories(fireteam_skirmish PRIVATE ${enet_SOURCE_DIR}/include)
 target_link_libraries(fireteam_skirmish PRIVATE fireteam_core raylib enet)
@@ -68,6 +86,11 @@ if(WIN32)
       $<TARGET_FILE_DIR:fireteam_skirmish>
     COMMAND_EXPAND_LISTS
   )
+endif()
+endif()
+
+if(FIRETEAM_BUILD_GODOT)
+  add_subdirectory(godot/cpp)
 endif()
 
 enable_testing()

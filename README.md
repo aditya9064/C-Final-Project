@@ -135,18 +135,31 @@ living entities, then removes dead ones. Adding a null entity or updating
 with negative/non-finite elapsed time throws `std::invalid_argument`.
 References to removed entities must not be used after an update.
 The renderer reads entity data rather than calling `Entity::render()`, and
-the gameplay core does not depend on raylib.
+the gameplay core does not depend on Godot.
 
 `GameState` starts in `MatchPhase::Lobby` and permits only the cycle
 Lobby -> InGame -> MatchOver -> Lobby. Illegal transitions throw
-`std::logic_error` without changing the phase. Player-count checks and
-winner detection are future work in #11, not implemented by this skeleton.
-The renderer uses raylib's 3D camera and drawing API, keeping gameplay and
-collision rules separate from rendering. `NetworkManager` will wrap ENet
-host lifetime with RAII; application message framing, validation, and
-host-authoritative state replication remain part of the planned game protocol.
-`Vector3` now supplies the 3D math used by entity positions and movement.
-`Vector2` remains available for genuinely 2D uses such as HUD layout.
+`std::logic_error` without changing the phase. `MatchSession` handles two-player
+joining, host-authoritative movement/health, elimination, rematches, and
+disconnects. The Godot `FireteamSession` extension delegates movement collision
+to Godot physics while keeping match rules in C++. `Vector3` supplies the 3D math
+used by entity positions and movement; `Vector2` remains available for
+genuinely 2D uses such as HUD layout.
+
+`Player` derives from `Entity` and applies validated, frame-rate-independent
+movement in player-relative X/Z directions, plus yaw and pitch. It reports a
+fire request to the combat layer. `godot/scripts/game.gd` connects input and a
+first-person camera; the C++ extension resolves player motion against the arena.
+Weapons and hit detection remain Khushal's integration work.
+
+`NetworkProtocol` defines versioned, fixed-size, little-endian messages for
+client movement, aim, and fire input, plus the host's two-player match
+snapshot. Encoders and decoders validate ranges, player health, IDs, packet
+headers, and malformed data before accepting it. The ENet transport wrapper
+from [PR #17](https://github.com/aditya9064/C-Final-Project/pull/17) is integrated
+with `MatchSession`. Host is player 1, the sole client is player 2. Client
+messages carry controls, never trusted transforms or health. See
+[the Godot C++ integration guide](godot/cpp/README.md).
 
 ### Match state machine
 
@@ -183,13 +196,13 @@ flowchart LR
     subgraph Host [Host]
         InputA[Input] --> PlayerA[Player]
         PlayerA --> WorldA[GameWorld]
-        WorldA --> RendererA[Renderer / raylib]
+        WorldA --> RendererA[Renderer / Godot]
         WorldA <--> NetA[NetworkManager / authority]
     end
     subgraph Client [Joining client]
         InputB[Input] --> PlayerB[Player]
         PlayerB --> WorldB[GameWorld]
-        WorldB --> RendererB[Renderer / raylib]
+        WorldB --> RendererB[Renderer / Godot]
         WorldB <--> NetB[NetworkManager]
     end
     NetA <-->|ENet over UDP| NetB
@@ -201,7 +214,7 @@ flowchart LR
 |---|---|---|
 | Language | C++20 | Course requirement |
 | Build | CMake 3.16+ with `FetchContent` | One build system works across Windows/macOS/Linux with no manual dependency installs |
-| Rendering/window/input | [raylib](https://www.raylib.com/) 5.5 | Direct 3D camera, drawing, and input APIs suitable for a compact FPS prototype |
+| Rendering/window/input | [Godot](https://godotengine.org/) 4.7 with C++ GDExtension | Reuses Koushik's 3D arena; gameplay and ENet remain C++ |
 | Networking | [ENet](http://enet.bespin.org/) 1.3.18 | Purpose-built for real-time game networking (sequencing/reliability over UDP), much smaller surface than general-purpose async I/O libraries |
 | Testing | [doctest](https://github.com/doctest/doctest) 2.4.11 | Header-only, fast to compile, fast to run in CI |
 
@@ -210,8 +223,9 @@ flowchart LR
 ### Prerequisites
 - CMake ≥ 3.16
 - A C++20 compiler (recent MSVC, GCC, or Clang)
+- Python 3 (Godot binding generator) and Godot 4.7 standard edition
 - Internet connection on first configure (CMake `FetchContent` downloads
-  raylib, ENet, and doctest source)
+  godot-cpp, ENet, and doctest source)
 
 ### Build
 
@@ -225,17 +239,24 @@ cmake --build build --config Release --parallel
 ### Run
 
 ```bash
-# macOS / Linux
-./build/fireteam_skirmish
-
-# Windows (Visual Studio generator)
-build\Release\fireteam_skirmish.exe
+# Replace <godot> with your Godot 4.7 executable.
+<godot> --headless --path godot --editor --import --quit
+<godot> --path godot -- --host --port 27770
+# Run a second instance (or use the host's LAN IP on a second computer).
+<godot> --path godot -- --join 127.0.0.1 --port 27770
 ```
 
-This currently runs a **build/dependency smoke test** (opens a window,
-draws a placeholder 3D scene, initializes networking) rather than the full
-game. Gameplay and the networking protocol still need to be ported to the
-approved 3D scope.
+The default scene has host/join controls, first-person WASD/mouse input,
+host-side arena collision, replicated players, health, match state, and a
+host rematch control. The local soldier is hidden in first person and the
+remote player uses a supplied teal or orange soldier model. An animated
+first-person arms-and-weapon model follows the camera; click plays its fire
+animation and R plays a visual reload. These do not yet implement shooting
+or ammunition. The soldier models are static. Asset attribution and license
+details are in [the Godot integration guide](godot/cpp/README.md). The older
+raylib smoke test is preserved behind
+`-DFIRETEAM_BUILD_LEGACY_SMOKE=ON`; core-only tests can use
+`-DFIRETEAM_BUILD_GODOT=OFF`.
 
 ## Project structure
 
@@ -245,6 +266,7 @@ c-final-project/
 ├── assets/             Game assets (models, textures, fonts, sounds) as added
 ├── docs/                proposal, AI-use log, evidence (tests/memory diagnostics)
 ├── include/fireteam/    Public headers
+├── godot/               Arena, gameplay UI, C++ extension, integration tests
 ├── src/                 Implementation (.cpp)
 ├── tests/                doctest-based test suite
 └── CMakeLists.txt        Build configuration (FetchContent for all dependencies)
@@ -291,7 +313,7 @@ Full conventions (commit style, review expectations, code style) are in
 | Area | Owner |
 |---|---|
 | Core engine, game loop, `NetworkManager` | Aditya Miriyala |
-| raylib 3D rendering, camera, player controls, HUD | Koushik Cherukuri |
+| Godot arena, 3D rendering, characters, visual design | Koushik Cherukuri |
 | Weapons, 3D hit detection, optional bots/grenade | Khushal Lingamaneni |
 
 (Everyone writes tests for their own subsystem and reviews teammates' PRs,
@@ -318,4 +340,5 @@ responsibility, not exclusive access.)
 
 ## License
 
-[MIT](LICENSE)
+Project code is licensed under [MIT](LICENSE). The animated viewmodel has
+separate [attribution and license terms](godot/cpp/README.md#animated-viewmodel-attribution).

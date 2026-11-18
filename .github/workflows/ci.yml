@@ -18,18 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # raylib's GLFW backend builds from source via FetchContent and needs
-      # these X11/OpenGL development libraries on Linux runners.
-      - name: Install Linux build dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
-            libxinerama-dev libxkbcommon-dev libasound2-dev \
-            libudev-dev libgl1-mesa-dev libfreetype-dev \
-            xvfb
-
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
@@ -40,20 +28,22 @@ jobs:
         working-directory: build
         run: ctest --output-on-failure --build-config Release
 
-      # Linux runners have no display server; raylib window creation needs a
-      # virtual framebuffer to run the smoke-test executable headlessly.
-      - name: Run build smoke test (Linux, headless)
-        if: runner.os == 'Linux'
-        run: xvfb-run --auto-servernum ./build/fireteam_skirmish
-
-      - name: Run build smoke test (macOS)
-        if: runner.os == 'macOS'
-        run: ./build/fireteam_skirmish
-
-      - name: Run build smoke test (Windows)
-        if: runner.os == 'Windows'
-        run: ./build/Release/fireteam_skirmish.exe
+      - name: Download Godot 4.7
         shell: bash
+        run: |
+          mkdir -p godot-engine
+          case "$RUNNER_OS" in
+            Linux) archive=Godot_v4.7-stable_linux.x86_64.zip; binary=Godot_v4.7-stable_linux.x86_64 ;;
+            macOS) archive=Godot_v4.7-stable_macos.universal.zip; binary=Godot.app/Contents/MacOS/Godot ;;
+            Windows) archive=Godot_v4.7-stable_win64.exe.zip; binary=Godot_v4.7-stable_win64.exe ;;
+          esac
+          curl -fL "https://github.com/godotengine/godot/releases/download/4.7-stable/$archive" -o godot-engine/engine.zip
+          unzip -q godot-engine/engine.zip -d godot-engine
+          echo "GODOT_BIN=$PWD/godot-engine/$binary" >> "$GITHUB_ENV"
+
+      - name: Godot import, scene, and two-process multiplayer tests
+        shell: bash
+        run: python tests/test_godot_processes.py "$GODOT_BIN"
 
   # Memory diagnostic required by the course: run the unit tests under
   # AddressSanitizer + LeakSanitizer. Linux only, because Apple clang does
@@ -64,17 +54,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
-            libxinerama-dev libxkbcommon-dev libasound2-dev \
-            libudev-dev libgl1-mesa-dev libfreetype-dev
-
       - name: Configure (ASan)
         run: >
           cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug
+          -DFIRETEAM_BUILD_GODOT=OFF
           -DCMAKE_CXX_FLAGS="-fsanitize=address -fno-omit-frame-pointer"
           -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address"
 

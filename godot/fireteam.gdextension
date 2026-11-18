@@ -1,0 +1,9 @@
+[configuration]
+entry_symbol = "fireteam_library_init"
+compatibility_minimum = "4.5"
+reloadable = false
+
+[libraries]
+macos = "res://bin/fireteam.dylib"
+linux = "res://bin/fireteam.so"
+windows = "res://bin/fireteam.dll"

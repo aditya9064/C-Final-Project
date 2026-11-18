@@ -108,7 +108,95 @@ Format (one entry per use):
   which will be useful for camera-relative movement, while dot products
   support aiming and hit-direction calculations.
 
+### 2026-11-13 — Aditya Miriyala — GitHub Copilot (Copilot SDK in VS Code)
+- **Where:** `include/fireteam/Player.hpp`, `src/Player.cpp`,
+  `include/fireteam/NetworkProtocol.hpp`, `src/NetworkProtocol.cpp`, tests,
+  CMake, and README.
+- **Why:** The FPS needs a defined, validated wire format for client controls
+  and host-authoritative player/match state, plus a gameplay entity that can
+  consume those controls without depending on the renderer.
+- **What I kept/changed:** Added `Player`, with validated frame-rate-independent
+  movement, aim updates, and a fire-request result for later combat handling.
+  Its `PlayerInput` is shared with the protocol. Added versioned little-endian
+  packet encoding for movement/aim/fire input and fixed two-player snapshots.
+  Validation rejects malformed headers, invalid ranges, non-finite world
+  values, impossible health, duplicate player IDs, and invalid empty slots.
+  The ENet transport remains in approved PR #17 and is not duplicated here.
+- **How I checked it:** `cmake --build build --parallel 4`,
+  `ctest --test-dir build --output-on-failure`, and
+  `./build/tests/fireteam_tests` passed: 46 test cases and 166 assertions.
+  `./build/fireteam_skirmish` initialized ENet, rendered the raylib smoke
+  scene, and exited successfully; this is not a playable game loop.
+- **What I learned:** ENet moves packet bytes but does not define application
+  meaning; a versioned, explicitly encoded protocol is needed so peers can
+  reject invalid data before it reaches gameplay. The shared input type also
+  avoids separate movement rules for local and future networked controls.
+
 <!-- Add further entries above this line as the project progresses. -->
+
+### 2026-11-18 - First-person animation integration - GitHub Copilot
+- **Why:** The user supplied a rigged arms-and-weapon GLB and chose to use it
+  for the first-person viewmodel, confirming permission to use and share it.
+- **Generated changes:** Copilot imported the unchanged model, positioned it
+  in front of the camera, and connected draw, visual fire, and visual reload
+  animations. The local viewmodel replaces the team-colored static weapons;
+  the soldiers remain static. The asset's source and license metadata are
+  attributed in `godot/cpp/README.md`. Learner review has not been confirmed.
+- **Validation:** The Godot integration tests exercise both local player
+  views, animation triggers and skeletal movement, and multiplayer loopback.
+  A windowed capture was inspected. Combat and ammunition are not implemented,
+  and cross-platform performance and two-computer LAN play remain unverified.
+
+### User-supplied character integration - GitHub Copilot
+- **Why:** The user requested their supplied teal/orange soldier and weapon
+  GLBs in the existing first-person multiplayer prototype.
+- **Generated changes:** Copilot integrated the supplied static models,
+  kept collision capsules and multiplayer behavior, adjusted the models'
+  orientation and first-person weapon placement, and generated missing mesh
+  normals and tangents during Godot import. The source GLBs were not edited.
+  Learner review and understanding have not yet been confirmed.
+- **Validation:** The Godot process test runner passed its asset import,
+  native-session, game-scene, and two-process loopback checks. Windowed
+  captures were inspected for weapon placement and both soldier orientations.
+  This does not establish cross-platform performance or two-computer LAN behavior.
+- **Limitations:** The assets have no skeleton or animation, and there are no
+  first-person hands. Fire is still an integration hook, not working combat.
+
+### 2026-11-14 - C++ Godot engine/network integration - GitHub Copilot
+- **Scope:** The user selected Godot, confirmed instructor approval for C++
+  GDExtension, and requested only their engine/networking work. Teammate
+  weapons, final characters, and arena visual design remain separate.
+- **Generated changes:** Imported the reviewed ENet transport from PR #17
+  and Koushik's Godot arena/assets from PR #18. Added `MatchSession` for
+  authoritative two-player inputs/snapshots, IDs, timeouts, disconnect,
+  damage/result, and rematch. Added the C++ `FireteamSession` bridge, Godot
+  collision callbacks, first-person input/camera and host/join UI, integration
+  tests, build configuration, and CI. The arena builder is unchanged.
+  Learner review and understanding have not yet been confirmed.
+- **Validation:** `cmake --build build-godot --parallel 4` passed;
+  `ctest --test-dir build-godot --output-on-failure` and
+  `./build-godot/tests/fireteam_tests` passed: 69 cases, 320 assertions.
+  `python3 tests/test_godot_processes.py
+  /tmp/fireteam-godot-4.7/Godot.app/Contents/MacOS/Godot` passed import,
+  native-session tests, real-arena keyboard/mouse/camera tests, and two
+  independent process replication/result/rematch/disconnect tests.
+  Windowed `game_smoke.gd` also passed on Apple M4/Vulkan; a non-fatal
+  MoltenVK pipeline-cache warning remains.
+- **Memory validation:** Core-only Debug build with
+  `-fsanitize=address,undefined -fno-omit-frame-pointer` passed all 69 cases /
+  320 assertions using `ASAN_OPTIONS=detect_leaks=0:halt_on_error=1`.
+  LeakSanitizer is disabled locally because Apple Clang does not support it;
+  Linux CI retains ASan/LSan. Updated remote CI has not run on this work yet.
+- **Fixes during validation:** Added required OS binding to the trimmed
+  godot-cpp profile; enabled exception support so core validation can be
+  logged at the Godot boundary. Fixed fresh spawn/body synchronization,
+  explicit input-capture/focus state, and automatic menu restoration after
+  disconnect. The test runner rejects Godot script errors even if Godot
+  returns exit status zero.
+- **Limitations:** Fire/damage integration hooks are tested using test-only
+  damage, not a working weapon. No bots, grenades, jumping/crouching, or
+  client prediction. Two-computer LAN and cross-platform runs still require
+  teammates/CI; only loopback multiplayer is locally verified.
 
 ### 2026-11-08 - GameWorld/GameState scaffolding - GitHub Copilot
 - **Where:** `GameWorld.hpp/.cpp`, `GameState.hpp/.cpp`, their tests,

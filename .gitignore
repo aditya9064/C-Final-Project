@@ -1,5 +1,6 @@
 # Build output
 build/
+build-*/
 out/
 cmake-build-*/
 _deps/
@@ -39,6 +40,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+godot/.godot/
+godot/arena_*.png
+godot/bin/
+godot/pipeline/config.local.json
+*.blend1
 
 # Memory/sanitizer diagnostic output (keep the final evidence you choose to
 # commit under docs/evidence/ instead of raw tool dumps)

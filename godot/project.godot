@@ -1,0 +1,13 @@
+; Godot owns rendering/physics; the C++ GDExtension owns gameplay/networking.
+
+config_version=5
+
+[application]
+
+config/name="Fireteam: Skirmish"
+run/main_scene="res://scenes/game.tscn"
+config/features=PackedStringArray("4.7", "Forward Plus")
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
