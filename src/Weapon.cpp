@@ -1,4 +1,5 @@
 #include "fireteam/Weapon.hpp"
+#include "fireteam/Time.hpp"
 
 #include <algorithm>
 
@@ -39,7 +40,8 @@ FireResult Weapon::fire(const Entity& shooter, Entity& target) {
 }
 
 void Weapon::update(float deltaSeconds) {
-  if (deltaSeconds <= 0.0f) {
+  requireValidDt(deltaSeconds);
+  if (deltaSeconds == 0.0f) {
     return;
   }
   cooldownLeft_ = cooldownLeft_ - deltaSeconds;

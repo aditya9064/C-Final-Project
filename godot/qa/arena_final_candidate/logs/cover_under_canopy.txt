@@ -1,0 +1,5 @@
+COVER_TEST [PASS] stand behind 1.28 low cover -> exposed (blocked=false expected=false)
+COVER_TEST [PASS] crouch behind 1.28 low cover -> concealed (blocked=true expected=true)
+COVER_TEST [PASS] stand behind 2.10 tall cover -> concealed (blocked=true expected=true)
+COVER_TEST [PASS] stand head behind 2.10 tall cover -> concealed (blocked=true expected=true)
+COVER_TEST [PASS] bullet into low cover cannot pass through (blocked=true expected=true)

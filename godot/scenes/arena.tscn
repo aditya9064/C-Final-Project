@@ -1,0 +1,45 @@
+[gd_scene load_steps=5 format=3 uid="uid://fireteamarena0001"]
+
+[ext_resource type="Script" path="res://scripts/build_arena.gd" id="1_arena"]
+[ext_resource type="Texture2D" path="res://assets/hdri/sky.hdr" id="2_sky"]
+
+[sub_resource type="PanoramaSkyMaterial" id="Sky_mat"]
+panorama = ExtResource("2_sky")
+energy_multiplier = 1.0
+
+[sub_resource type="Sky" id="Sky_res"]
+sky_material = SubResource("Sky_mat")
+process_mode = 2
+radiance_size = 4
+
+[sub_resource type="Environment" id="Env"]
+background_mode = 2
+sky = SubResource("Sky_res")
+ambient_light_source = 3
+ambient_light_energy = 1.0
+reflected_light_source = 2
+tonemap_mode = 3
+tonemap_exposure = 0.85
+tonemap_white = 2.0
+ssao_enabled = true
+ssao_intensity = 1.5
+ssao_radius = 0.9
+ssao_power = 1.6
+ssil_enabled = true
+ssil_intensity = 0.6
+sdfgi_enabled = false
+glow_enabled = true
+glow_intensity = 0.3
+glow_strength = 0.9
+glow_bloom = 0.02
+glow_hdr_threshold = 1.5
+adjustment_enabled = true
+adjustment_brightness = 1.0
+adjustment_contrast = 1.06
+adjustment_saturation = 1.14
+
+[node name="Arena" type="Node3D"]
+script = ExtResource("1_arena")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env")

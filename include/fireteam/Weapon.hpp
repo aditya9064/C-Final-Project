@@ -40,7 +40,7 @@ class Weapon {
   FireResult fire(const Entity& shooter, Entity& target);
 
   // Counts the cooldown down by the time since the last frame.
-  // Zero or negative time is ignored.
+  // Zero time is ignored; negative or non-finite time throws std::invalid_argument.
   void update(float deltaSeconds);
 
   bool canFire() const { return cooldownLeft_ <= 0.0f; }

@@ -1,5 +1,6 @@
 # Build output
 build/
+build-*/
 out/
 cmake-build-*/
 _deps/
@@ -40,7 +41,17 @@ Thumbs.db
 # Logs
 *.log
 
+# Godot/Blender pipeline: Blender autosave backups and per-machine tool paths
+# (godot/pipeline/setup.ps1 writes config.local.json; config.json is the template)
+*.blend1
+godot/pipeline/config.local.json
+
 # Memory/sanitizer diagnostic output (keep the final evidence you choose to
 # commit under docs/evidence/ instead of raw tool dumps)
 *.dSYM/
 build-asan/
+
+# Concept-art references: redistribution rights are not confirmed, so the images
+# stay local. Put your own copies in art/references/ (see its README).
+art/references/*
+!art/references/README.md
