@@ -72,6 +72,36 @@ Format (one entry per use):
 
 <!-- Add further entries above this line as the project progresses. -->
 
+### 2026-11-13 - NetworkManager scaffold - GitHub Copilot
+- **Where:** `include/fireteam/NetworkManager.hpp`,
+  `src/NetworkManager.cpp`, `tests/test_network_manager.cpp`, CMake, and
+  README networking notes (issue #4).
+- **Why:** Implement the assigned ENet RAII host/client wrapper and verify
+  loopback connection and packet exchange.
+- **Generated changes:** Copilot added a non-blocking manager API, shared
+  process-wide ENet initialization, RAII host/packet cleanup, event polling,
+  client send/server broadcast, and localhost tests. The learner's review
+  and understanding are not yet confirmed.
+- **Validation performed by Copilot:** `cmake -S . -B build
+  -DCMAKE_BUILD_TYPE=Debug`, `cmake --build build --parallel 4`,
+  `ctest --test-dir build --output-on-failure`, and
+  `./build/tests/fireteam_tests` passed: 23 cases and 62 assertions.
+- **Memory check:** Built the tests with AddressSanitizer and ran
+  `./build-asan/tests/fireteam_tests`; all 23 cases / 62 assertions passed
+  with no ASan diagnostics. LeakSanitizer is unsupported by Apple clang on
+  this machine. Recorded output: `docs/evidence/asan-2026-11-13-network-manager.md`.
+- **Other checks:** `git diff --check` passed. A Linux/macOS/Windows CI run
+  is still needed.
+- **Limitations:** The transport returns payload bytes as-is; it does not
+  decode or validate an application-level packet format. A one-byte payload
+  is tested as an opaque short payload, not claimed to be a malformed framed
+  message. Protocol framing/validation remains future work.
+- **Learning topics to review:** RAII of ENet hosts and packets, process-wide
+  runtime lifetime, move-only ownership, and non-blocking event polling.
+  These are topics to study, not a claim that learning is complete.
+- **Excerpt:** Request: "lets get woring on the next steps." Explanation:
+  the #4 branch is based on `develop`, keeping it separate from the open
+  #3 PR so that the network wrapper PR does not bundle unrelated work.
 ### 2026-11-08 - GameWorld/GameState scaffolding - GitHub Copilot
 - **Where:** `GameWorld.hpp/.cpp`, `GameState.hpp/.cpp`, their tests,
   CMake targets, and README architecture notes (issue #3).
