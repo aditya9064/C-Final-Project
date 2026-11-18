@@ -3,6 +3,7 @@ extends Node3D
 var session: FireteamSession
 var camera: Camera3D
 var player_visuals: Node3D
+var hud: CanvasLayer
 var menu: VBoxContainer
 var status: Label
 var address: LineEdit
@@ -46,6 +47,8 @@ func _ready() -> void:
 	$Arena.set_process_input(false)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_build_menu()
+	hud = load("res://scenes/hud.tscn").instantiate()
+	add_child(hud)
 	var port_index := args.find("--port")
 	if port_index != -1 and port_index + 1 < args.size():
 		port.value = int(args[port_index + 1])
@@ -154,9 +157,11 @@ func _physics_process(_delta: float) -> void:
 		return
 	var state := session.get_state()
 	player_visuals.update_view(state)
+	hud.update_state(state, controls_active)
 	host_button.disabled = state.active
 	join_button.disabled = state.active
 	rematch_button.disabled = not state.host or state.phase != 2
+	status.visible = not state.active or not last_error.is_empty()
 	if not state.active:
 		if was_active:
 			controls_active = false

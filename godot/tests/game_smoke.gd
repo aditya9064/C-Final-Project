@@ -112,6 +112,26 @@ func _run() -> void:
 			"Client viewmodel must follow its first-person camera")
 	_check(client.get_node("HostPlayer").visible, "Client must see the remote host")
 	_check(not client.get_node("ClientPlayer").visible, "Client must not see its own soldier")
+	var hud: CanvasLayer = game.hud
+	hud.update_state(game.session.get_state(), false)
+	_check(not hud.visible, "HUD must hide when controls are inactive")
+	hud.update_state(game.session.get_state(), true)
+	_check(hud.visible and hud.team_label.text == "TEAL", "Host HUD must show the teal team")
+	_check(hud.health_bar.value == 100 and hud.health_label.text == "100",
+		"HUD must show replicated local health")
+	_check(hud.phase_label.text == "IN GAME" and hud.crosshair.visible,
+		"HUD must show the match phase and crosshair")
+	hud.update_state(client.get_state(), true)
+	_check(hud.team_label.text == "ORANGE", "Client HUD must show the orange team")
+	var hud_dead_state: Dictionary = client.get_state().duplicate(true)
+	hud_dead_state.players[1].health = 0
+	hud_dead_state.phase = 2
+	hud_dead_state.winner_id = 1
+	hud.update_state(hud_dead_state, true)
+	_check(hud.health_bar.value == 0 and not hud.crosshair.visible,
+		"HUD must show elimination and hide the crosshair")
+	_check(hud.phase_label.text == "MATCH OVER" and hud.result_label.text == "TEAL WINS",
+		"HUD must show the authoritative match winner")
 	game.yaw = PI / 2
 	game._capture()
 	var press := InputEventKey.new()

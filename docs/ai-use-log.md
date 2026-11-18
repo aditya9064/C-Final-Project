@@ -134,6 +134,17 @@ Format (one entry per use):
 
 <!-- Add further entries above this line as the project progresses. -->
 
+### 2026-11-18 - First-person HUD adaptation - GitHub Copilot
+- **Why:** The user asked to adapt useful work from the open teammate PRs
+  while preserving first-person multiplayer and the newer player models.
+- **Generated changes:** Copilot adapted Koushik's HUD layout from PR #20 to
+  the existing C++ session snapshot. It displays the team, health, phase,
+  winner, and crosshair without inventing ammo, scores, or timers.
+  Learner and teammate review have not yet been confirmed.
+- **Validation:** Godot integration tests exercised host and client HUD state,
+  elimination, result, and multiplayer loopback; a windowed capture was
+  inspected. PR #20 contains additional work that is not integrated here.
+
 ### 2026-11-18 - First-person animation integration - GitHub Copilot
 - **Why:** The user supplied a rigged arms-and-weapon GLB and chose to use it
   for the first-person viewmodel, confirming permission to use and share it.

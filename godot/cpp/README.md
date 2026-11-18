@@ -37,6 +37,11 @@ one client joins. MatchOver enables the
 host's rematch button. Disconnect clears the client's slot and returns the
 host to Lobby.
 
+The HUD adapts Koushik's work from PR #20 to show the local team, replicated
+health, match phase, winner, and a crosshair in first person. Ammo, scores,
+and timers are not displayed because the multiplayer session does not yet
+provide those values.
+
 The user-supplied teal and orange soldier GLBs provide the remote player
 visuals; the local player sees the supplied animated arms-and-weapon GLB.
 Both teams use the same first-person viewmodel. It plays draw, fire, and

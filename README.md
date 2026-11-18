@@ -251,7 +251,9 @@ host-side arena collision, replicated players, health, match state, and a
 host rematch control. The local soldier is hidden in first person and the
 remote player uses a supplied teal or orange soldier model. An animated
 first-person arms-and-weapon model follows the camera; click plays its fire
-animation and R plays a visual reload. These do not yet implement shooting
+animation and R plays a visual reload. The HUD, adapted from Koushik's PR #20,
+shows replicated health, team, phase, winner, and a crosshair. These visuals
+do not yet implement shooting
 or ammunition. The soldier models are static. Asset attribution and license
 details are in [the Godot integration guide](godot/cpp/README.md). The older
 raylib smoke test is preserved behind
