@@ -68,8 +68,13 @@ func _cam_fwd_x() -> float:
 	return Vector2(f.x, f.z).normalized().x
 
 func _finish(ok: bool) -> void:
-	var img := get_viewport().get_texture().get_image()
-	img.save_png(_out + "/respawn_%s_team%d.png" % ["auth" if _authority else "noauth", _team])
+	# Screenshot only when a real framebuffer exists (windowed). Headless has no
+	# viewport texture, so guard it -- the verdict line must always print.
+	var tex := get_viewport().get_texture()
+	if tex != null:
+		var img := tex.get_image()
+		if img != null:
+			img.save_png(_out + "/respawn_%s_team%d.png" % ["auth" if _authority else "noauth", _team])
 	var pass_all := not _results.has(false)
 	print("RESPAWN_CHECK ", "PASS" if (pass_all and ok) else "FAIL",
 		" team=", _team, " authority=", _authority, " (", _results.size(), " checks)")

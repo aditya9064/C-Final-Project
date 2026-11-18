@@ -68,8 +68,11 @@ func _process(_d: float) -> void:
 		Input.action_press("aim")  # now aim so the character faces camera-forward
 	elif _frames == 85:
 		await RenderingServer.frame_post_draw
-		var img := get_viewport().get_texture().get_image()
-		img.save_png(_out + "/play_thirdperson.png")
+		var tex := get_viewport().get_texture()
+		if tex != null:
+			var img := tex.get_image()
+			if img != null:
+				img.save_png(_out + "/play_thirdperson.png")
 		var disp2 := _p.global_position - _start
 		# team 0 (teal) faces +X inward -> W increases x; team 1 (orange) faces -X.
 		var want_sign := 1.0 if _team == 0 else -1.0

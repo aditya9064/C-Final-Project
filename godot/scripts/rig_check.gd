@@ -29,9 +29,11 @@ func _process(_d: float) -> void:
 	for p in get_children():
 		if not (p is CharacterBody3D):
 			continue
-		var model: Node = p.get_node_or_null("male_tailored")
-		if model == null:
-			model = p.get_node_or_null("female_tailored")
+		var model: Node = null
+		for mc in p.get_children():
+			if mc.get_node_or_null("Armature/Skeleton3D") != null:
+				model = mc
+				break
 		var tree: AnimationTree = null
 		for c in p.get_children():
 			if c is AnimationTree:

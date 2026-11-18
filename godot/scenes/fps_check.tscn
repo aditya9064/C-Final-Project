@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://fireteamfpschk1"]
+
+[ext_resource type="Script" path="res://scripts/fps_check.gd" id="1_fchk"]
+
+[node name="FpsCheck" type="Node3D"]
+script = ExtResource("1_fchk")
