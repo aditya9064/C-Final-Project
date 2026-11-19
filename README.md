@@ -147,10 +147,11 @@ used by entity positions and movement; `Vector2` remains available for
 genuinely 2D uses such as HUD layout.
 
 `Player` derives from `Entity` and applies validated, frame-rate-independent
-movement in player-relative X/Z directions, plus yaw and pitch. It reports a
-fire request to the combat layer. `godot/scripts/game.gd` connects input and a
-first-person camera; the C++ extension resolves player motion against the arena.
-Weapons and hit detection remain Khushal's integration work.
+movement in player-relative X/Z directions, plus yaw and pitch. Each player
+owns a rifle with host-controlled ammunition, reload and cooldown.
+`godot/scripts/game.gd` connects input and a first-person camera; the C++
+extension resolves player motion against the arena. The host casts shots from
+authoritative positions and validated aim, with arena cover blocking hits.
 
 `NetworkProtocol` defines versioned, fixed-size, little-endian messages for
 client movement, aim, and fire input, plus the host's two-player match
@@ -251,10 +252,12 @@ host-side arena collision, replicated players, health, match state, and a
 host rematch control. The local soldier is hidden in first person and the
 remote player uses a supplied teal or orange soldier model. An animated
 first-person arms-and-weapon model follows the camera; click plays its fire
-animation and R plays a visual reload. The HUD, adapted from Koushik's PR #20,
+animation and R reloads. The HUD, adapted from Koushik's PR #20,
 shows replicated health, team, phase, winner, and a crosshair. These visuals
-do not yet implement shooting or ammunition. Koushik's rigged versions of the
-soldiers play idle or jogging animations based on replicated position changes;
+now accompany host-authoritative rifle fire. The rifle has a 30-round magazine,
+a two-second reload with unlimited spare ammunition, and a 0.25-second shot
+cooldown. Koushik's rigged versions of the soldiers play idle or jogging
+animations based on replicated position changes;
 combat animations are not networked. Asset attribution and license
 details are in [the Godot integration guide](godot/cpp/README.md). The older
 raylib smoke test is preserved behind

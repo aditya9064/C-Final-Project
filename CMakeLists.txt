@@ -48,6 +48,8 @@ add_library(fireteam_core STATIC
   src/Vector3.cpp
   src/Entity.cpp
   src/Player.cpp
+  src/Weapon.cpp
+  src/Rifle.cpp
   src/NetworkProtocol.cpp
   src/NetworkManager.cpp
   src/MatchSession.cpp

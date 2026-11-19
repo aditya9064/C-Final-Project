@@ -134,6 +134,34 @@ Format (one entry per use):
 
 <!-- Add further entries above this line as the project progresses. -->
 
+### 2026-11-18 - Player smoothing and rig repair - GitHub Copilot
+- **Why:** The user requested smoother multiplayer and fewer character
+  animation artifacts.
+- **Generated changes:** Copilot added render-frame interpolation for remote
+  soldier positions and yaw, bounded position offset from authoritative
+  collision bodies, and immediate camera rotation on mouse input. Two small
+  chest details in each soldier GLB were reassigned from thumb bones to
+  `spine_03`; other mesh and animation data were retained.
+- **Validation:** Inspected idle and jogging poses for both models and checked
+  smoothing, collision-body separation, teleport and reconnect handling in
+  the Godot game smoke test. Other floating or distorted details remain during
+  locomotion; the source rig needs further correction. The changes do not
+  implement client prediction or reduce actual network latency; physical LAN
+  performance is not yet verified.
+
+### 2026-11-18 - Host-authoritative combat - GitHub Copilot
+- **Why:** The user requested playable combat and chose unlimited spare ammo.
+- **Generated changes:** Copilot adapted the rifle's damage, range and cadence
+  from Khushal's PR #16 to the current 3D multiplayer branch, added a timed
+  magazine reload and host-side hit/cover raycasts, and replicated ammunition
+  and shot state. The PR's distance-only 2D hit check was not used. Teammate
+  and learner review have not yet been confirmed.
+- **Validation:** C++ tests cover rifle cooldown, empty magazines, reload,
+  protocol validation, and authoritative client requests. Godot tests cover
+  host/client shots, missed and blocked shots, damage, match result, and
+  rematch, including two independent processes on loopback. A windowed game
+  smoke test passed. A physical two-computer LAN test remains outstanding.
+
 ### 2026-11-18 - Rigged multiplayer soldiers - GitHub Copilot
 - **Why:** The user requested Koushik's latest changes while retaining the
   first-person multiplayer prototype and the selected soldier designs.

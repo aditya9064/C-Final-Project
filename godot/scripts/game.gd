@@ -14,6 +14,11 @@ var rematch_button: Button
 var yaw := 0.0
 var pitch := 0.0
 var fire_pending := false
+var reload_pending := false
+var visual_player_id := 0
+var visual_phase := 0
+var visual_shots := 0
+var visual_reloading := false
 var last_error := ""
 var controls_active := false
 var was_active := false
@@ -28,7 +33,9 @@ func _ready() -> void:
 	session = FireteamSession.new()
 	add_child(session)
 	session.session_error.connect(_on_error)
-	session.fire_requested.connect(func(_id: int): status.text = "Fire requested; weapon integration is pending.")
+	var combat = load("res://scripts/combat.gd").new()
+	add_child(combat)
+	combat.setup(session)
 	camera = Camera3D.new()
 	camera.near = 0.05
 	camera.fov = 75
@@ -101,7 +108,7 @@ func _build_menu() -> void:
 	)
 	menu.add_child(leave)
 	var instructions := Label.new()
-	instructions.text = "WASD: move | Mouse: look | Esc: menu\nClick: capture mouse / request fire | R: visual reload\nArena collision is authoritative on the host.\nWeapon animations are visual; combat is not yet integrated."
+	instructions.text = "WASD: move | Mouse: look | Esc: menu\nClick: capture mouse / fire | R: reload\nThe host resolves shots, cover, and damage."
 	menu.add_child(instructions)
 	status = Label.new()
 	status.position = Vector2(20, 440)
@@ -138,14 +145,17 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		controls_active = false
+		fire_pending = false
+		reload_pending = false
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		menu.show()
 	elif event is InputEventMouseMotion and controls_active:
 		yaw = wrapf(yaw + event.relative.x * 0.002, -PI, PI)
 		pitch = clampf(pitch - event.relative.y * 0.002, -1.5, 1.5)
+		camera.rotation = Vector3(pitch, -yaw, 0)
 	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R:
 		if controls_active and session.get_state().phase == 1:
-			player_visuals.play_reload()
+			reload_pending = true
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if controls_active:
 			fire_pending = true
@@ -157,6 +167,7 @@ func _physics_process(delta: float) -> void:
 		return
 	var state := session.get_state()
 	player_visuals.update_view(state, delta)
+	_update_weapon_animation(state)
 	hud.update_state(state, controls_active)
 	host_button.disabled = state.active
 	join_button.disabled = state.active
@@ -166,6 +177,7 @@ func _physics_process(delta: float) -> void:
 		if was_active:
 			controls_active = false
 			fire_pending = false
+			reload_pending = false
 			menu.show()
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		was_active = false
@@ -178,10 +190,9 @@ func _physics_process(delta: float) -> void:
 		move.y = float(Input.is_physical_key_pressed(KEY_W)) - float(Input.is_physical_key_pressed(KEY_S))
 		move = move.limit_length()
 	if state.host or state.connected:
-		session.set_input(move.x, move.y, yaw, pitch, fire_pending)
-	if fire_pending and controls_active and state.phase == 1:
-		player_visuals.play_fire()
+		session.set_input(move.x, move.y, yaw, pitch, fire_pending, reload_pending)
 	fire_pending = false
+	reload_pending = false
 	if state.local_player_id != 0:
 		var player: Dictionary = state.players[state.local_player_id - 1]
 		camera.position = player.position + Vector3(0, 1.63, 0)
@@ -193,9 +204,27 @@ func _physics_process(delta: float) -> void:
 		if not last_error.is_empty():
 			status.text += "\n" + last_error
 
+func _update_weapon_animation(state: Dictionary) -> void:
+	var id: int = state.local_player_id
+	if not state.active or id < 1 or id > state.players.size() or state.players[id - 1].id != id:
+		visual_player_id = 0
+		visual_phase = 0
+		return
+	var player: Dictionary = state.players[id - 1]
+	if visual_player_id == id and visual_phase == 1 and state.phase == 1:
+		if player.shots_fired != visual_shots:
+			player_visuals.play_fire()
+		elif player.reloading and not visual_reloading:
+			player_visuals.play_reload()
+	visual_player_id = id
+	visual_phase = state.phase
+	visual_shots = player.shots_fired
+	visual_reloading = player.reloading
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and session != null:
 		controls_active = false
 		fire_pending = false
+		reload_pending = false
 		menu.show()
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

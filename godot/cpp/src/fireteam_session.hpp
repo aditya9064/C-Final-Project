@@ -19,7 +19,8 @@ class FireteamSession : public godot::Node3D {
   bool host_game(int port);
   bool join_game(const godot::String& address, int port);
   void stop_game();
-  bool set_input(double moveX, double moveZ, double yaw, double pitch, bool fire);
+  bool set_input(double moveX, double moveZ, double yaw, double pitch, bool fire,
+                 bool reload = false);
   bool damage_player(int playerId, int amount);
   bool restart_match();
   godot::Dictionary get_state() const;

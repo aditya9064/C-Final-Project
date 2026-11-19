@@ -37,14 +37,19 @@ void FireteamSession::_bind_methods() {
   ClassDB::bind_method(D_METHOD("join_game", "address", "port"),
                        &FireteamSession::join_game);
   ClassDB::bind_method(D_METHOD("stop_game"), &FireteamSession::stop_game);
-  ClassDB::bind_method(D_METHOD("set_input", "move_x", "move_z", "yaw", "pitch", "fire"),
-                       &FireteamSession::set_input);
+  ClassDB::bind_method(D_METHOD("set_input", "move_x", "move_z", "yaw", "pitch", "fire", "reload"),
+                       &FireteamSession::set_input, DEFVAL(false));
   ClassDB::bind_method(D_METHOD("damage_player", "player_id", "amount"),
                        &FireteamSession::damage_player);
   ClassDB::bind_method(D_METHOD("restart_match"), &FireteamSession::restart_match);
   ClassDB::bind_method(D_METHOD("get_state"), &FireteamSession::get_state);
   ADD_SIGNAL(MethodInfo("session_error", PropertyInfo(Variant::STRING, "message")));
   ADD_SIGNAL(MethodInfo("fire_requested", PropertyInfo(Variant::INT, "player_id")));
+  ADD_SIGNAL(MethodInfo("shot_fired", PropertyInfo(Variant::INT, "player_id"),
+                        PropertyInfo(Variant::FLOAT, "yaw"),
+                        PropertyInfo(Variant::FLOAT, "pitch"),
+                        PropertyInfo(Variant::INT, "damage"),
+                        PropertyInfo(Variant::FLOAT, "range")));
 }
 
 void FireteamSession::_ready() {
@@ -82,7 +87,10 @@ void FireteamSession::_ready() {
   session_.setCollisionResolver([this](std::uint32_t id, Vector3 position) {
     return resolve_collision(id, position);
   });
-  session_.setFireHandler([this](std::uint32_t id) {
+  session_.setFireHandler([this](std::uint32_t id, float yaw, float pitch,
+                                 int damage, float range) {
+    synchronize_bodies();
+    emit_signal("shot_fired", static_cast<int>(id), yaw, pitch, damage, range);
     emit_signal("fire_requested", static_cast<int>(id));
   });
   set_physics_process(true);
@@ -120,10 +128,10 @@ void FireteamSession::stop_game() {
 }
 
 bool FireteamSession::set_input(double moveX, double moveZ, double yaw,
-                                double pitch, bool fire) {
+                                double pitch, bool fire, bool reload) {
   try {
     session_.submitInput({static_cast<float>(moveX), static_cast<float>(moveZ),
-                          static_cast<float>(yaw), static_cast<float>(pitch), fire});
+                          static_cast<float>(yaw), static_cast<float>(pitch), fire, reload});
     return true;
   } catch (const std::exception& error) {
     report_error(error);
@@ -174,6 +182,10 @@ godot::Dictionary FireteamSession::get_state() const {
     entry["pitch"] = player.pitch;
     entry["health"] = player.health;
     entry["max_health"] = player.maxHealth;
+    entry["ammo"] = player.ammo;
+    entry["max_ammo"] = player.maxAmmo;
+    entry["reloading"] = player.reloading;
+    entry["shots_fired"] = static_cast<std::int64_t>(player.shotsFired);
     players.push_back(entry);
   }
   result["players"] = players;

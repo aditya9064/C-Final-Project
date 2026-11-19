@@ -32,52 +32,69 @@ For core-only builds use `-DFIRETEAM_BUILD_GODOT=OFF`.
 
 Host/join buttons are also available on launch. WASD moves on the ground plane;
 mouse looks, Esc opens the menu, and clicking outside the menu recaptures the
-mouse. R plays a visual reload during a match. Host stays in the lobby until
+mouse. Click fires; R reloads a partially used magazine. Host stays in the lobby until
 one client joins. MatchOver enables the
 host's rematch button. Disconnect clears the client's slot and returns the
 host to Lobby.
 
 The HUD adapts Koushik's work from PR #20 to show the local team, replicated
-health, match phase, winner, and a crosshair in first person. Ammo, scores,
-and timers are not displayed because the multiplayer session does not yet
-provide those values.
+health, magazine ammunition, reload state, match phase, winner, and a
+crosshair in first person. Scores and timers are not yet displayed.
 
 Koushik's rigged versions of the user-supplied teal and orange soldiers
 provide the remote player visuals; the local player sees the supplied
 animated arms-and-weapon GLB. The soldiers play idle and jogging animations
 based on replicated position changes, with a short hold between snapshots.
+Remote visuals interpolate between authoritative positions and yaw, with their
+position kept within 0.15 m of the collision body; large jumps snap immediately.
+Mouse look updates the local camera as input arrives. This reduces visible
+jitter, but does not reduce network round-trip latency or predict movement.
+Shots still use authoritative collision bodies, so the smoothed visual and
+hitbox may differ slightly.
 These are presentation estimates, not replicated animation events: directional
 movement and remote firing, reload, and death animations are not implemented.
 Both teams use the same first-person viewmodel. It plays draw, fire, and
-reload animations, but these are visual only: there is no firing or ammo
-logic yet. The earlier team-colored static weapon GLBs remain in the project
+reload animations when the authoritative state confirms them. The earlier team-colored static weapon GLBs remain in the project
 but are not displayed. Capsules remain as collision shapes.
 
 Godot's import postprocessor generates missing normals and tangents for the
 older static team models without modifying the source GLBs. The rigged soldier
 models use Godot's standard importer to retain their skinning. Overall
-performance has not been benchmarked.
+performance has not been benchmarked. Two small chest details in each rigged
+soldier were reassigned from thumb bones to `spine_03` to prevent them from
+following the hands. Other visible rigging artifacts remain during locomotion;
+they require further work on the source rig.
 Movement is host authoritative, with no client prediction yet. Walls/cover
 block movement through Godot physics; there is no jump, crouch, or gravity
-simulation. The fire signal is an integration hook, not a weapon.
+simulation.
+
+The rifle uses 25 damage, 300 m range, and a 0.25 s cooldown, adapted from
+Khushal's PR #16. Each player has a 30-round magazine and a two-second reload
+with unlimited spare ammunition. A host-side ray starts at the player's eye,
+uses their requested yaw and pitch, and checks arena geometry and player
+collision before applying damage. Misses and blocked shots consume ammunition.
+The host controls reloads, cooldowns, damage, and the match result.
 
 ## Teammate interfaces
 
 `FireteamSession` methods available to Godot:
 
 - `host_game(port)` / `join_game(address, port)` / `stop_game()`.
-- `set_input(move_x, move_z, yaw, pitch, fire)`; normalized movement, angles
-  in radians. Positive yaw rotates toward +X, positive pitch looks up.
+- `set_input(move_x, move_z, yaw, pitch, fire, reload = false)`; normalized
+  movement, angles in radians. Positive yaw rotates toward +X, positive pitch
+  looks up. Fire and reload are one-shot requests.
 - `get_state()` returns `local_player_id`, `port`, `host`, `active`,
   `connected`, `phase` (0 Lobby, 1 InGame, 2 MatchOver), `winner_id`, and
   two player dictionaries (`id`, `position`, `yaw`, `pitch`, `health`,
-  `max_health`). Positions are feet in metres; player ID zero is an empty slot.
-- `damage_player(player_id, amount)` is host-only. Khushal's weapon handler
-  must first raycast from authoritative player aim in the host's physics
-  world, then apply damage. Do not accept client-supplied hits or damage.
+  `max_health`, `ammo`, `max_ammo`, `reloading`, `shots_fired`). Positions are
+  feet in metres; player ID zero is an empty slot. The wire protocol is version
+  2; both peers must run this version.
+- `damage_player(player_id, amount)` is host-only. The combat handler calls it
+  only after a host-side raycast; clients never supply hits or damage.
 - `restart_match()` is host-only.
-- Signals: `fire_requested(player_id)` on the host and `session_error(message)`
-  for explicit connection/validation failures. Errors are also logged.
+- Signals: `shot_fired(player_id, yaw, pitch, damage, range)` and the legacy
+  `fire_requested(player_id)` on the host for accepted shots, and
+  `session_error(message)` for explicit connection/validation failures.
 
 The child soldier visuals follow the replicated body position and yaw.
 Godot camera yaw uses the negative of core yaw.
@@ -92,14 +109,14 @@ python3 tests/test_godot_processes.py "<godot>"
 ```
 
 The first script loads the native class, connects two sessions, verifies IDs,
-movement, real Godot wall collision, replicated transforms, the fire hook,
-host-applied damage, winner, rematch, and disconnect.
+movement, real Godot wall collision, replicated transforms, host/client
+shooting, misses, cover, damage, winner, rematch, and disconnect.
 The Python runner first imports assets and requires explicit PASS markers
 without script errors. It runs the native-session script and a real-arena
 keyboard/mouse/camera/menu test, including both local perspectives, animation
 triggers and bone motion, and model lighting data, then launches two independent Godot processes
-and verifies input, snapshots, damage/result, rematch, and disconnect over loopback.
-These test-only damage calls prove the combat API, not production hit detection.
+and verifies client input, actual raycast damage/result, rematch, and
+disconnect over loopback.
 CI builds/tests the extension on Linux, macOS, and Windows and runs core
 ASan/LSan separately. Remote CI results require publishing the branch.
 

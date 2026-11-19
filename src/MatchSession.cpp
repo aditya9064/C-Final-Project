@@ -86,7 +86,9 @@ void MatchSession::refreshSnapshot(MatchPhase phase) {
       const auto& player = *players_[i];
       snapshot_.players[i] = {
           static_cast<std::uint32_t>(i + 1), player.position(), player.yaw(),
-          player.pitch(), player.health(), player.maxHealth()};
+          player.pitch(), player.health(), player.maxHealth(),
+          player.weapon().ammo(), player.weapon().magazineSize(),
+          player.weapon().reloading(), player.weapon().shotsFired()};
     }
   }
 }
@@ -108,7 +110,13 @@ void MatchSession::rememberInput(std::size_t slot, const PlayerInput& input) {
   auto& pending = inputs_[slot];
   pending.input = input;
   pending.input.firePressed = false;
+  pending.input.reloadPressed = false;
   pending.fire |= input.firePressed;
+  pending.reload |= input.reloadPressed;
+  if (input.firePressed) {
+    pending.fireYaw = input.yaw;
+    pending.firePitch = input.pitch;
+  }
   pending.age = 0.0f;
   pending.received = Clock::now();
 }
@@ -128,6 +136,7 @@ void MatchSession::submitInput(const PlayerInput& input) {
     network_->sendToServer(NetworkProtocol::encodeClientInput(input));
     network_->flush();
     inputs_[1].fire = false;
+    inputs_[1].reload = false;
   }
 }
 
@@ -177,15 +186,18 @@ void MatchSession::simulate(float deltaSeconds) {
     }
     auto& player = *players_[i];
     auto& pending = inputs_[i];
+    player.update(deltaSeconds);
     pending.age += deltaSeconds;
     if (pending.age > options_.inputTimeoutSeconds ||
         expired(pending.received, options_.inputTimeoutSeconds)) {
       pending.input = {};
       pending.fire = false;
+      pending.reload = false;
       continue;
     }
     if (!player.isAlive()) {
       pending.fire = false;
+      pending.reload = false;
       continue;
     }
     const auto previous = player.position();
@@ -204,10 +216,17 @@ void MatchSession::simulate(float deltaSeconds) {
       player.setPosition(previous);
       throw std::runtime_error("Player moved outside supported world bounds");
     }
+    if (std::exchange(pending.reload, false)) {
+      player.weapon().reload();
+    }
     const bool fire = std::exchange(pending.fire, false);
-    if (fire && fireHandler_) {
+    if (fire && player.weapon().fire()) {
       refreshSnapshot(MatchPhase::InGame);
-      fireHandler_(static_cast<std::uint32_t>(i + 1));
+      if (fireHandler_) {
+        fireHandler_(static_cast<std::uint32_t>(i + 1),
+                     pending.fireYaw, pending.firePitch,
+                     player.weapon().damage(), player.weapon().range());
+      }
     }
   }
   refreshSnapshot(snapshot_.phase);

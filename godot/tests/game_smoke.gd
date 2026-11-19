@@ -74,8 +74,8 @@ func _run() -> void:
 					_check_clip_motion(visuals.soldier_animations[i], soldier_skeletons[0] as Skeleton3D, clip)
 				visuals.soldier_animations[i].play("idle")
 			var bounds: AABB = visuals._bounds(visuals.soldiers[i], Transform3D.IDENTITY)
-			_check(absf(bounds.position.y) < 0.01 and absf(bounds.size.y - 1.8) < 0.01,
-				"Soldier must be 1.8 m tall with feet at the player's position")
+			_check(absf(bounds.position.y - visuals.soldiers[i].global_position.y) < 0.01 and absf(bounds.size.y - 1.8) < 0.01,
+				"Soldier must be 1.8 m tall with feet at the player's position: %s" % bounds)
 			var helmet := visuals.soldiers[i].find_child("helmet_helmet_0", true, false) as MeshInstance3D
 			_check(helmet != null, "Soldier helmet is missing")
 			if helmet != null:
@@ -109,8 +109,18 @@ func _run() -> void:
 			"Viewmodel must play its draw animation when shown")
 		var movement_state: Dictionary = game.session.get_state().duplicate(true)
 		visuals.update_view(movement_state, 0.016)
+		var remote_body: Node3D = game.session.get_node("ClientPlayer")
+		var original_body_position := remote_body.global_position
+		var original_visual_position: Vector3 = visuals.soldiers[1].global_position
 		movement_state.players[1].position.x += 0.1
 		visuals.update_view(movement_state, 0.016)
+		visuals._render_soldiers(1.0 / 120.0)
+		var rendered_position: Vector3 = visuals.soldiers[1].global_position
+		_check(rendered_position.x > original_visual_position.x and
+			rendered_position.x < movement_state.players[1].position.x,
+			"Remote visual must interpolate between authoritative positions")
+		_check(remote_body.global_position == original_body_position,
+			"Visual smoothing must not move the authoritative hitbox")
 		_check(visuals.soldier_animations[1].current_animation == "jog",
 			"Remote position changes must start the locomotion animation")
 		visuals.update_view(movement_state, 0.1)
@@ -119,6 +129,22 @@ func _run() -> void:
 		visuals.update_view(movement_state, 0.11)
 		_check(visuals.soldier_animations[1].current_animation == "idle",
 			"Stopping must return the soldier to idle")
+		movement_state.players[1].position.x += 1.0
+		visuals.update_view(movement_state, 0.016)
+		visuals._render_soldiers(0.0)
+		_check(visuals.soldiers[1].global_position.distance_to(movement_state.players[1].position) <= 0.151,
+			"Visual smoothing must keep the remote model close to its authoritative hitbox")
+		visuals.soldiers[1].global_rotation.y = PI - 0.1
+		visuals.visual_yaws[1] = -PI + 0.1
+		visuals._render_soldiers(0.04)
+		_check(absf(wrapf(visuals.soldiers[1].global_rotation.y - PI, -PI, PI)) < 0.1,
+			"Visual yaw interpolation must take the short path across the angle boundary")
+		movement_state.players[1].position.x += 20.0
+		visuals.update_view(movement_state, 0.016)
+		_check(visuals.soldiers[1].global_position.distance_to(movement_state.players[1].position) < 0.001,
+			"Teleports must snap the visual to the new position")
+		_check(visuals.soldier_animations[1].current_animation == "idle",
+			"Teleports must not trigger the jogging animation")
 		movement_state.players[1].id = 0
 		visuals.update_view(movement_state, 0.016)
 		movement_state.players[1].id = 2
@@ -153,6 +179,7 @@ func _run() -> void:
 	_check(hud.visible and hud.team_label.text == "TEAL", "Host HUD must show the teal team")
 	_check(hud.health_bar.value == 100 and hud.health_label.text == "100",
 		"HUD must show replicated local health")
+	_check(hud.ammo_label.text == "30 / 30", "HUD must show the authoritative magazine")
 	_check(hud.phase_label.text == "IN GAME" and hud.crosshair.visible,
 		"HUD must show the match phase and crosshair")
 	hud.update_state(client.get_state(), true)
@@ -187,22 +214,27 @@ func _run() -> void:
 	var mouse := InputEventMouseMotion.new()
 	mouse.relative = Vector2(20, -20)
 	game._input(mouse)
+	_check(game.camera.rotation.x > 0, "Mouse look must update before the next physics tick")
 	await physics_frame
 	_check(game.pitch > 0, "Mouse input did not update pitch")
 	_check(game.camera.rotation.x > 0, "Camera did not use first-person aim")
 	_check(not game.menu.visible, "Menu should be hidden while playing")
-	var reload := InputEventKey.new()
-	reload.keycode = KEY_R
-	reload.pressed = true
-	game._input(reload)
-	_check(visuals.animation_player.current_animation == "reload", "R must play the visual reload")
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = true
 	game._input(click)
-	await physics_frame
-	await physics_frame
+	for _frame in range(8):
+		await physics_frame
 	_check(visuals.animation_player.current_animation == "fire", "Fire input must play the fire animation")
+	_check(game.session.get_state().players[0].ammo == 29, "A shot must consume ammunition")
+	var reload := InputEventKey.new()
+	reload.keycode = KEY_R
+	reload.pressed = true
+	game._input(reload)
+	for _frame in range(8):
+		await physics_frame
+	_check(visuals.animation_player.current_animation == "reload", "R must start the reload animation")
+	_check(game.session.get_state().players[0].reloading, "Reload must be authoritative")
 	var args := OS.get_cmdline_user_args()
 	var capture_index := args.find("--capture")
 	if capture_index != -1 and capture_index + 1 < args.size():

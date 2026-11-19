@@ -7,7 +7,6 @@ var joined_once := false
 var rematched := false
 var frames := 0
 var match_end_frame := 0
-var fire_sent := false
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -17,6 +16,9 @@ func _run() -> void:
 	is_host = "--test-host" in args
 	session = FireteamSession.new()
 	root.add_child(session)
+	var combat = load("res://scripts/combat.gd").new()
+	root.add_child(combat)
+	combat.setup(session)
 	session.session_error.connect(func(message: String):
 		push_error(message)
 		failed = true
@@ -26,10 +28,6 @@ func _run() -> void:
 		if not session.host_game(0):
 			quit(1)
 			return
-		session.fire_requested.connect(func(id: int):
-			if id == 2 and session.get_state().phase == 1:
-				session.damage_player(2, 100)
-		)
 		print("FIRETEAM_HOST_READY ", session.get_state().port)
 	else:
 		var index := args.find("--test-port")
@@ -42,7 +40,7 @@ func _physics_process(_delta: float) -> bool:
 		return false
 	frames += 1
 	if frames > 2400:
-		push_error("Separate-process session test timed out")
+		push_error("Separate-process session test timed out: %s" % [session.get_state()])
 		quit(1)
 		return false
 	var state := session.get_state()
@@ -50,10 +48,6 @@ func _physics_process(_delta: float) -> bool:
 		joined_once = true
 		if is_host:
 			session.set_input(0, 0, 0, 0, false)
-		elif not fire_sent:
-			var moved: bool = state.players[1].position.z < -2
-			session.set_input(0, 1 if not moved else 0, 0, 0, moved)
-			fire_sent = moved
 		elif rematched:
 			if state.players[1].health != 100:
 				push_error("Rematch health not restored")
@@ -62,8 +56,13 @@ func _physics_process(_delta: float) -> bool:
 			session.stop_game()
 			print("FIRETEAM_PROCESS_CLIENT PASS")
 			quit(0)
+		else:
+			var moved: bool = state.players[1].position.z < -2
+			var direction: Vector3 = state.players[0].position - state.players[1].position
+			var yaw := atan2(direction.x, -direction.z) if moved else 0.0
+			session.set_input(0, 0 if moved else 1, yaw, 0, moved and frames % 24 == 0)
 	if state.phase == 2:
-		if state.winner_id != 1 or state.players[1].health != 0:
+		if state.winner_id != 2 or state.players[0].health != 0:
 			push_error("Incorrect match result")
 			quit(1)
 			return false

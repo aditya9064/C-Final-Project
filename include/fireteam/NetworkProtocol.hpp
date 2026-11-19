@@ -19,6 +19,10 @@ struct PlayerSnapshot {
   float pitch = 0.0f;
   std::int32_t health = 0;
   std::int32_t maxHealth = 0;
+  std::int32_t ammo = 0;
+  std::int32_t maxAmmo = 0;
+  bool reloading = false;
+  std::uint32_t shotsFired = 0;
 };
 
 struct GameSnapshot {
@@ -29,9 +33,9 @@ struct GameSnapshot {
 
 class NetworkProtocol {
  public:
-  // Version 1 uses little-endian integers and IEEE-754 32-bit floats.
+  // Version 2 uses little-endian integers and IEEE-754 32-bit floats.
   static constexpr std::size_t kClientInputPacketSize = 28;
-  static constexpr std::size_t kGameSnapshotPacketSize = 76;
+  static constexpr std::size_t kGameSnapshotPacketSize = 108;
 
   static std::array<std::uint8_t, kClientInputPacketSize> encodeClientInput(
       const ClientInput& input);

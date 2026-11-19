@@ -14,6 +14,7 @@ add_executable(fireteam_tests
   test_vector2.cpp
   test_vector3.cpp
   test_player.cpp
+  test_weapon.cpp
   test_network_protocol.cpp
   test_network_manager.cpp
   test_match_session.cpp

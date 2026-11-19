@@ -18,6 +18,16 @@ func _wait_for(predicate: Callable, label: String) -> void:
 		await physics_frame
 	_check(false, "Timed out: " + label)
 
+func _shoot(session: FireteamSession, yaw: float, pitch: float = 0.0) -> void:
+	var player_id: int = session.get_state().local_player_id
+	var previous: int = session.get_state().players[player_id - 1].shots_fired
+	session.set_input(0, 0, yaw, pitch, true)
+	await _wait_for(func(): return session.get_state().players[player_id - 1].shots_fired > previous, "shot")
+
+func _cooldown() -> void:
+	for _frame in range(20):
+		await physics_frame
+
 func _run() -> void:
 	var host := FireteamSession.new()
 	var client := FireteamSession.new()
@@ -26,6 +36,9 @@ func _run() -> void:
 	host.session_error.connect(func(message: String): errors.append(message))
 	client.session_error.connect(func(message: String): errors.append(message))
 	host.fire_requested.connect(func(_id: int): fire_count += 1)
+	var combat = load("res://scripts/combat.gd").new()
+	root.add_child(combat)
+	combat.setup(host)
 
 	var wall := StaticBody3D.new()
 	var shape := CollisionShape3D.new()
@@ -41,6 +54,32 @@ func _run() -> void:
 	await _wait_for(func(): return client.get_state().phase == 1, "two-player match")
 	_check(host.get_state().local_player_id == 1, "Host ID must be 1")
 	_check(client.get_state().local_player_id == 2, "Client ID must be 2")
+
+	await _shoot(host, PI / 2)
+	_check(host.get_state().players[1].health == 100, "Cover must block shots")
+	_check(host.get_state().players[0].ammo == 29, "Blocked shots must consume ammunition")
+	await _cooldown()
+	await _shoot(host, 0)
+	_check(host.get_state().players[1].health == 100, "Shots aimed away must miss")
+	wall.collision_layer = 0
+	await _cooldown()
+	await _shoot(host, PI / 2, 0.5)
+	_check(host.get_state().players[1].health == 100, "Shots aimed above a player must miss")
+	await _cooldown()
+	await _shoot(host, PI / 2)
+	await _wait_for(func(): return client.get_state().players[1].health == 75, "host hit replicated to client")
+	await _shoot(client, -PI / 2)
+	await _wait_for(func(): return host.get_state().players[0].health == 75, "client hit resolved by host")
+	for _shot in range(3):
+		await _cooldown()
+		await _shoot(host, PI / 2)
+	await _wait_for(func(): return client.get_state().phase == 2, "shooting produces a match result")
+	_check(client.get_state().winner_id == 1, "Combat winner must be the host")
+	_check(host.restart_match(), "Combat rematch failed")
+	await _wait_for(func(): return client.get_state().phase == 1, "combat rematch")
+	_check(client.get_state().players[0].ammo == 30, "Rematch must reset ammunition")
+	wall.collision_layer = 1
+	await physics_frame
 
 	for _frame in range(90):
 		host.set_input(0, 1, PI / 2, 0.2, false)
@@ -74,8 +113,9 @@ func _run() -> void:
 	host.free()
 	client.free()
 	wall.free()
+	combat.free()
 	if errors.is_empty():
-		print("FIRETEAM_GODOT_SMOKE PASS: extension, IDs, movement, collision, replication, fire hook, winner, rematch, disconnect, reconnect")
+		print("FIRETEAM_GODOT_SMOKE PASS: extension, movement, cover, host/client shots, damage, winner, rematch, disconnect, reconnect")
 		quit(0)
 	else:
 		quit(1)

@@ -1,4 +1,5 @@
 #include "fireteam/Player.hpp"
+#include "fireteam/Rifle.hpp"
 
 #include <cmath>
 #include <stdexcept>
@@ -22,7 +23,8 @@ bool isValidPlayerInput(const PlayerInput& input) noexcept {
 }
 
 Player::Player(Vector3 position, int maxHealth, float moveSpeed)
-    : Entity(position, maxHealth), moveSpeed_(moveSpeed) {
+    : Entity(position, maxHealth), moveSpeed_(moveSpeed),
+      weapon_(std::make_unique<Rifle>()) {
   if (!std::isfinite(moveSpeed_) || moveSpeed_ < 0.0f) {
     throw std::invalid_argument("moveSpeed must be finite and non-negative");
   }
@@ -56,6 +58,7 @@ void Player::update(float deltaSeconds) {
   if (!std::isfinite(deltaSeconds) || deltaSeconds < 0.0f) {
     throw std::invalid_argument("deltaSeconds must be finite and non-negative");
   }
+  weapon_->update(deltaSeconds);
 }
 
 }  // namespace fireteam

@@ -9,7 +9,7 @@ namespace fireteam {
 namespace {
 
 constexpr std::array<std::uint8_t, 4> kMagic{'F', 'T', 'S', 'K'};
-constexpr std::uint8_t kVersion = 1;
+constexpr std::uint8_t kVersion = 2;
 constexpr std::uint8_t kClientInputType = 1;
 constexpr std::uint8_t kGameSnapshotType = 2;
 constexpr float kMaxWorldCoordinate = 10000.0f;
@@ -95,7 +95,9 @@ void validateInput(const ClientInput& input) {
 void validatePlayer(const PlayerSnapshot& player) {
   if (player.playerId == 0) {
     if (player.position != Vector3{} || player.yaw != 0.0f ||
-        player.pitch != 0.0f || player.health != 0 || player.maxHealth != 0) {
+        player.pitch != 0.0f || player.health != 0 || player.maxHealth != 0 ||
+        player.ammo != 0 || player.maxAmmo != 0 || player.reloading ||
+        player.shotsFired != 0) {
       throw std::invalid_argument("Empty player slot must have zero state");
     }
     return;
@@ -105,7 +107,8 @@ void validatePlayer(const PlayerSnapshot& player) {
       !isValidPlayerInput(
           PlayerInput{.yaw = player.yaw, .pitch = player.pitch}) ||
       player.maxHealth <= 0 || player.health < 0 ||
-      player.health > player.maxHealth) {
+      player.health > player.maxHealth || player.maxAmmo <= 0 ||
+      player.ammo < 0 || player.ammo > player.maxAmmo) {
     throw std::invalid_argument("Player snapshot contains invalid state");
   }
 }
@@ -142,13 +145,14 @@ NetworkProtocol::encodeClientInput(const ClientInput& input) {
   writeFloat(packet, 16, input.yaw);
   writeFloat(packet, 20, input.pitch);
   packet[24] = input.firePressed ? 1 : 0;
+  packet[25] = input.reloadPressed ? 1 : 0;
   return packet;
 }
 
 ClientInput NetworkProtocol::decodeClientInput(
     std::span<const std::uint8_t> packet) {
   validateHeader(packet, kClientInputPacketSize, kClientInputType);
-  if (packet[24] > 1 || packet[25] != 0 || packet[26] != 0 ||
+  if (packet[24] > 1 || packet[25] > 1 || packet[26] != 0 ||
       packet[27] != 0) {
     throw std::invalid_argument("Client input has invalid button data");
   }
@@ -159,6 +163,7 @@ ClientInput NetworkProtocol::decodeClientInput(
       .yaw = readFloat(packet, 16),
       .pitch = readFloat(packet, 20),
       .firePressed = packet[24] != 0,
+      .reloadPressed = packet[25] != 0,
   };
   validateInput(input);
   return input;
@@ -183,7 +188,11 @@ NetworkProtocol::encodeGameSnapshot(const GameSnapshot& snapshot) {
     writeFloat(packet, offset + 20, player.pitch);
     writeI32(packet, offset + 24, player.health);
     writeI32(packet, offset + 28, player.maxHealth);
-    offset += 32;
+    writeI32(packet, offset + 32, player.ammo);
+    writeI32(packet, offset + 36, player.maxAmmo);
+    writeU32(packet, offset + 40, player.reloading ? 1 : 0);
+    writeU32(packet, offset + 44, player.shotsFired);
+    offset += 48;
   }
   return packet;
 }
@@ -222,7 +231,15 @@ GameSnapshot NetworkProtocol::decodeGameSnapshot(
     player.pitch = readFloat(packet, offset + 20);
     player.health = readI32(packet, offset + 24);
     player.maxHealth = readI32(packet, offset + 28);
-    offset += 32;
+    player.ammo = readI32(packet, offset + 32);
+    player.maxAmmo = readI32(packet, offset + 36);
+    const auto reloading = readU32(packet, offset + 40);
+    if (reloading > 1) {
+      throw std::invalid_argument("Player snapshot has invalid reload state");
+    }
+    player.reloading = reloading != 0;
+    player.shotsFired = readU32(packet, offset + 44);
+    offset += 48;
   }
 
   validateSnapshot(snapshot);

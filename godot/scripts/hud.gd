@@ -12,6 +12,7 @@ var team_label: Label
 var phase_label: Label
 var result_label: Label
 var crosshair: Control
+var ammo_label: Label
 var _team_id := 0
 
 
@@ -23,6 +24,7 @@ func _ready() -> void:
 	_build_crosshair(root)
 	_build_matchbar(root)
 	_build_health(root)
+	_build_ammo(root)
 	hide()
 
 
@@ -99,6 +101,17 @@ func _build_health(root: Control) -> void:
 	health_label = _label("", 20, Color.WHITE)
 	row.add_child(health_label)
 
+func _build_ammo(root: Control) -> void:
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _panel())
+	panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	panel.position = Vector2(-22, -22)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	root.add_child(panel)
+	ammo_label = _label("", 20, Color.WHITE)
+	panel.add_child(ammo_label)
+
 
 func update_state(state: Dictionary, controls_active: bool) -> void:
 	var player_id: int = state.local_player_id
@@ -121,6 +134,7 @@ func update_state(state: Dictionary, controls_active: bool) -> void:
 	health_bar.max_value = player.max_health
 	health_bar.value = player.health
 	health_label.text = str(player.health)
+	ammo_label.text = "RELOADING" if player.reloading else "%d / %d" % [player.ammo, player.max_ammo]
 	phase_label.text = PHASE_NAMES[state.phase]
 	result_label.text = ""
 	result_label.visible = state.phase == 2 and state.winner_id in [1, 2]

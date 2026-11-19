@@ -26,7 +26,7 @@ struct SessionOptions {
 class MatchSession {
  public:
   using CollisionResolver = std::function<Vector3(std::uint32_t, Vector3)>;
-  using FireHandler = std::function<void(std::uint32_t)>;
+  using FireHandler = std::function<void(std::uint32_t, float, float, int, float)>;
 
   explicit MatchSession(SessionOptions options = {});
   ~MatchSession();
@@ -65,6 +65,9 @@ class MatchSession {
     float age = 0.0f;
     Clock::time_point received{};
     bool fire = false;
+    bool reload = false;
+    float fireYaw = 0.0f;
+    float firePitch = 0.0f;
   };
 
   void resetPlayers(bool includeClient);

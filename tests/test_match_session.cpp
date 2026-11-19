@@ -111,7 +111,7 @@ TEST_CASE("Stale input is released without moving or repeating fire forever") {
   MatchSession client;
   REQUIRE(connect(host, client));
   int fires = 0;
-  host.setFireHandler([&](std::uint32_t playerId) {
+  host.setFireHandler([&](std::uint32_t playerId, float, float, int, float) {
     CHECK(playerId == 1);
     ++fires;
   });
@@ -127,6 +127,44 @@ TEST_CASE("Stale input is released without moving or repeating fire forever") {
   CHECK(host.snapshot().players[0].position == stopped);
 }
 
+TEST_CASE("Host enforces client shot cooldown and replicates reload state") {
+  MatchSession host;
+  MatchSession client;
+  REQUIRE(connect(host, client));
+  int shots = 0;
+  float shotYaw = 0.0f;
+  host.setFireHandler([&](std::uint32_t id, float yaw, float, int damage, float range) {
+    CHECK(id == 2);
+    CHECK(damage == 25);
+    CHECK(range == 300.0f);
+    shotYaw = yaw;
+    ++shots;
+  });
+  client.submitInput(PlayerInput{.yaw = 1.0f, .firePressed = true});
+  client.submitInput(PlayerInput{.yaw = 0.0f});
+  REQUIRE(pumpUntil(host, client, [&] { return shots == 1; }));
+  CHECK(shotYaw == doctest::Approx(1.0f));
+  CHECK(host.snapshot().players[1].ammo == 29);
+  client.submitInput(PlayerInput{.firePressed = true});
+  for (int i = 0; i < 10; ++i) {
+    host.step(0.0f);
+    client.step(0.0f);
+  }
+  CHECK(shots == 1);
+  client.submitInput(PlayerInput{.reloadPressed = true});
+  REQUIRE(pumpUntil(host, client, [&] { return client.snapshot().players[1].reloading; }));
+  CHECK(client.snapshot().players[1].ammo == 29);
+  client.submitInput(PlayerInput{.firePressed = true});
+  host.step(0.1f);
+  for (int i = 0; i < 20; ++i) {
+    host.step(0.1f);
+    client.step(0.0f);
+  }
+  CHECK_FALSE(host.snapshot().players[1].reloading);
+  CHECK(host.snapshot().players[1].ammo == 30);
+  CHECK(shots == 1);
+}
+
 TEST_CASE("Collision and fire callbacks use authoritative state and allow elimination") {
   MatchSession host;
   MatchSession client;
@@ -140,7 +178,7 @@ TEST_CASE("Collision and fire callbacks use authoritative state and allow elimin
     }
     return desired;
   });
-  host.setFireHandler([&](std::uint32_t id) {
+  host.setFireHandler([&](std::uint32_t id, float, float, int, float) {
     CHECK(id == 1);
     host.applyDamage(2, 100);
   });
@@ -306,7 +344,7 @@ TEST_CASE("Remote fire is consumed once even when a release heartbeat follows it
   MatchSession client;
   REQUIRE(connect(host, client));
   int fires = 0;
-  host.setFireHandler([&](std::uint32_t id) {
+  host.setFireHandler([&](std::uint32_t id, float, float, int, float) {
     CHECK(id == 2);
     ++fires;
   });

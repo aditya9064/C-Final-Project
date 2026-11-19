@@ -6,12 +6,18 @@ const SOLDIERS := [
 ]
 const VIEWMODEL := "res://assets/models/weapons/fennec_animated_viewmodel.glb"
 const MOTION_HOLD_SECONDS := 0.2
+const VISUAL_SMOOTHING_SECONDS := 0.04
+const MAX_VISUAL_OFFSET := 0.15
+const TELEPORT_DISTANCE := 2.0
 
 var soldiers: Array[Node3D] = []
 var soldier_animations: Array[AnimationPlayer] = []
 var last_positions: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var has_position: Array[bool] = [false, false]
 var motion_remaining: Array[float] = [0.0, 0.0]
+var visual_targets: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
+var visual_yaws: Array[float] = [0.0, 0.0]
+var visual_initialized: Array[bool] = [false, false]
 var viewmodel: Node3D
 var animation_player: AnimationPlayer
 
@@ -28,6 +34,8 @@ func setup(session: FireteamSession, camera: Camera3D) -> bool:
 		if soldier == null:
 			return false
 		body.add_child(soldier)
+		# Keep presentation independent of the authoritative collision body.
+		soldier.top_level = true
 		soldiers.append(soldier)
 		var player := soldier.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
 		soldier_animations.append(player)
@@ -64,8 +72,20 @@ func _update_soldiers(state: Dictionary, delta: float) -> void:
 		if not state.active or state.phase != 1 or player.id != index + 1 or player.health <= 0:
 			has_position[index] = false
 			motion_remaining[index] = 0.0
+			visual_initialized[index] = false
 		else:
 			var position: Vector3 = player.position
+			var body := soldiers[index].get_parent() as Node3D
+			var target := (body.get_parent() as Node3D).to_global(position)
+			var yaw: float = -player.yaw + (body.get_parent() as Node3D).global_rotation.y
+			if not visual_initialized[index] or visual_targets[index].distance_to(target) > TELEPORT_DISTANCE:
+				soldiers[index].global_position = target
+				soldiers[index].global_rotation.y = yaw
+				visual_initialized[index] = true
+				has_position[index] = false
+				motion_remaining[index] = 0.0
+			visual_targets[index] = target
+			visual_yaws[index] = yaw
 			if not has_position[index]:
 				last_positions[index] = position
 				has_position[index] = true
@@ -80,6 +100,24 @@ func _update_soldiers(state: Dictionary, delta: float) -> void:
 		var clip := "jog" if motion_remaining[index] > 0.0 else "idle"
 		if soldier_animations[index].current_animation != clip:
 			soldier_animations[index].play(clip, 0.12)
+
+
+func _process(delta: float) -> void:
+	_render_soldiers(delta)
+
+
+func _render_soldiers(delta: float) -> void:
+	var weight := 1.0 - exp(-maxf(delta, 0.0) / VISUAL_SMOOTHING_SECONDS)
+	for index in range(soldiers.size()):
+		if not visual_initialized[index]:
+			continue
+		var soldier := soldiers[index]
+		var target := visual_targets[index]
+		var position := soldier.global_position.lerp(target, weight)
+		if position.distance_to(target) > MAX_VISUAL_OFFSET:
+			position = target + (position - target).normalized() * MAX_VISUAL_OFFSET
+		soldier.global_position = position
+		soldier.global_rotation.y = lerp_angle(soldier.global_rotation.y, visual_yaws[index], weight)
 
 
 func play_fire() -> void:
