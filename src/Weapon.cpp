@@ -1,7 +1,8 @@
 #include "fireteam/Weapon.hpp"
-#include "fireteam/Time.hpp"
 
 #include <algorithm>
+
+#include "fireteam/Time.hpp"
 
 namespace fireteam {
 
@@ -10,40 +11,27 @@ Weapon::Weapon(int damage, float range, float cooldownSeconds)
       range_(std::max(0.0f, range)),
       cooldownSeconds_(std::max(0.0f, cooldownSeconds)) {}
 
-FireResult Weapon::fire(const Entity& shooter, Entity& target) {
-  // Same address means it's the same object, so the player is
-  // trying to shoot themselves.
-  if (&shooter == &target) {
-    return FireResult::Invalid;
-  }
-  if (!shooter.isAlive()) {
-    return FireResult::Invalid;
-  }
+bool Weapon::fire(Vector3 origin, Vector3 aimDirection, Shot& shot) {
   // Still waiting on the last shot. Return without touching the
   // cooldown so it doesn't get reset or made longer.
   if (!canFire()) {
-    return FireResult::OnCooldown;
+    return false;
   }
 
-  // The shot happens now, so start the cooldown, even if it misses.
+  // The shot happens now, so start the cooldown.
   cooldownLeft_ = cooldownSeconds_;
 
-  // A dead target can't take damage, so count it as a miss.
-  if (!target.isAlive()) {
-    return FireResult::Missed;
-  }
-
-  if (checkHit(shooter, target)) {
-    return FireResult::Hit;
-  }
-  return FireResult::Missed;
+  // normalized() turns the aim into a unit vector. A (0, 0, 0) aim stays
+  // (0, 0, 0) instead of dividing by zero.
+  shot = makeShot(origin, aimDirection.normalized());
+  return true;
 }
 
 void Weapon::update(float deltaSeconds) {
+  // Throws on negative, NaN, or infinite dt, before the cooldown is
+  // touched, so a bad dt can never get stored in cooldownLeft_.
   requireValidDt(deltaSeconds);
-  if (deltaSeconds == 0.0f) {
-    return;
-  }
+
   cooldownLeft_ = cooldownLeft_ - deltaSeconds;
   if (cooldownLeft_ < 0.0f) {
     cooldownLeft_ = 0.0f;

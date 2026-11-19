@@ -5,15 +5,13 @@ namespace fireteam {
 Rifle::Rifle(int damage, float range, float cooldownSeconds)
     : Weapon(damage, range, cooldownSeconds) {}
 
-bool Rifle::checkHit(const Entity& shooter, Entity& target) {
-  float dist = distance(shooter.position(), target.position());
-
-  // A target exactly at max range still counts as a hit.
-  if (dist > range()) {
-    return false;
-  }
-  target.applyDamage(damage());
-  return true;
+Shot Rifle::makeShot(Vector3 origin, Vector3 direction) const {
+  Shot shot;
+  shot.origin = origin;
+  shot.direction = direction;
+  shot.range = range();
+  shot.damage = damage();
+  return shot;
 }
 
 }  // namespace fireteam

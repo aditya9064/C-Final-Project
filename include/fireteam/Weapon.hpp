@@ -3,21 +3,35 @@
 // A Weapon is not an Entity. It doesn't exist in the world by itself;
 // a Player owns one (composition), so the player can switch weapons.
 //
-// The cooldown is the wait time between shots. fire() checks it every
-// time, so no weapon can shoot faster than it is supposed to.
+// A weapon only decides WHEN it can shoot (the cooldown) and WHAT the
+// shot looks like (damage, range, direction). It does not decide who
+// gets hit. The combat code (#9) takes the Shot and checks it against
+// the entities in the world, so the weapon doesn't need to know about
+// Player, GameWorld, or any other entity.
 #pragma once
 
-#include "fireteam/Entity.hpp"
+#include "fireteam/Vector3.hpp"
 
 namespace fireteam {
 
-// The result of trying to fire. enum class keeps the names scoped,
-// so we write FireResult::Hit instead of just Hit.
-enum class FireResult {
-  Hit,         // shot fired and the target took damage
-  Missed,      // shot fired but the target took no damage
-  OnCooldown,  // fired too soon after the last shot, nothing happened
-  Invalid      // bad request (like shooting yourself), nothing happened
+// What kind of shot it is, so the caller knows what to do with it:
+//   Hitscan -> pass it to resolveShot() right away (Rifle)
+//   Grenade -> create a Projectile from it and add it to the world
+enum class ShotKind { Hitscan, Grenade };
+
+// Everything the combat code needs to know about one shot.
+// A plain struct because it's just data with no rules to protect.
+//
+// The shot is in 3D (y is up, units are metres). For a rifle the origin
+// should be the shooter's eye or gun height, not their feet, so the
+// bullet can go over low cover or get blocked by tall cover.
+struct Shot {
+  ShotKind kind = ShotKind::Hitscan;
+  Vector3 origin;     // where the shot starts, in 3D
+  Vector3 direction;  // unit-length aim direction, or (0, 0, 0) if no aim
+  float range = 0.0f;  // metres
+  int damage = 0;     // for a grenade, the damage at the blast center
+  float blastRadius = 0.0f;  // only used by grenades
 };
 
 class Weapon {
@@ -34,13 +48,18 @@ class Weapon {
   Weapon(const Weapon&) = delete;
   Weapon& operator=(const Weapon&) = delete;
 
-  // Tries to shoot at target. This checks the rules every weapon shares
-  // (no shooting yourself, shooter must be alive, cooldown must be done)
-  // and then calls checkHit(), which each weapon writes its own way.
-  FireResult fire(const Entity& shooter, Entity& target);
+  // Tries to shoot from `origin` toward `aimDirection`.
+  // - Ready: starts the cooldown, fills in `shot`, returns true.
+  // - Still cooling down: returns false and changes nothing (the cooldown
+  //   is not reset or made longer, and `shot` is left alone).
+  // The aim direction doesn't need to be unit length; fire() normalizes it.
+  // Both are 3D. Use groundToWorld() (Vector3.hpp) to turn an Entity's
+  // ground position into a 3D point at the right height.
+  bool fire(Vector3 origin, Vector3 aimDirection, Shot& shot);
 
   // Counts the cooldown down by the time since the last frame.
-  // Zero time is ignored; negative or non-finite time throws std::invalid_argument.
+  // dt == 0 is allowed. Negative, NaN, or infinite dt throws
+  // std::invalid_argument (see Time.hpp).
   void update(float deltaSeconds);
 
   bool canFire() const { return cooldownLeft_ <= 0.0f; }
@@ -50,10 +69,10 @@ class Weapon {
   float cooldownLeft() const { return cooldownLeft_; }
 
  protected:
-  // Each weapon decides here if the shot hits, and applies the damage.
-  // Returns true on a hit. Pure virtual (= 0), so Weapon itself can't be
-  // created, only subclasses like Rifle.
-  virtual bool checkHit(const Entity& shooter, Entity& target) = 0;
+  // Each kind of weapon builds its own kind of shot. Pure virtual (= 0),
+  // so Weapon itself can't be created, only subclasses like Rifle.
+  // Only called by fire(), after the cooldown check has passed.
+  virtual Shot makeShot(Vector3 origin, Vector3 direction) const = 0;
 
  private:
   int damage_;
