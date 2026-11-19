@@ -44,6 +44,7 @@ add_library(fireteam_core STATIC
   src/NetworkManager.cpp
   src/GameWorld.cpp
   src/GameState.cpp
+  src/Player.cpp  # issue #6 (Koushik): player movement/ammo/respawn model
 )
 # PUBLIC: anyone linking fireteam_core also gets this include path.
 target_include_directories(fireteam_core PUBLIC include ${enet_SOURCE_DIR}/include)

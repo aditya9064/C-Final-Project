@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://fireteamplayer01"]
+
+[ext_resource type="Script" path="res://scripts/player_rig.gd" id="1_rig"]
+
+[sub_resource type="CapsuleShape3D" id="cap"]
+radius = 0.35
+height = 1.8
+
+[node name="Player" type="PlayerBody"]
+script = ExtResource("1_rig")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("cap")

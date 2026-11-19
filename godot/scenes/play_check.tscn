@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://fireteamplaychk1"]
+
+[ext_resource type="Script" path="res://scripts/play_check.gd" id="1_play"]
+
+[node name="PlayCheck" type="Node3D"]
+script = ExtResource("1_play")

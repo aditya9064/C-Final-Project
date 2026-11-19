@@ -1,74 +1,68 @@
-# C++ gameplay layer (GDExtension) — integration plan
+# C++ gameplay layer (GDExtension)
 
-> **Status: NOT YET BUILT.** This is the documented plan + class mapping, not
-> compiled code. No `.cpp` gameplay has been written or built for Godot. The
-> arena, materials, cameras, cover collision and cover raycast tests are
-> implemented in GDScript (`../scripts/build_arena.gd`) so the renderer could be
-> validated by actually running it. Below is how the C++20 gameplay from the
-> original design maps onto Godot via `godot-cpp`. The team-level decision
-> (SFML vs Godot, what must change, CI implications) is written up in
-> [`../../docs/rendering-architecture.md`](../../docs/rendering-architecture.md);
-> this file is the lower-level class mapping that would follow from it.
+> **Status: building.** The GDExtension spike passed
+> ([`docs/evidence/gdextension-spike-2026-11-16.md`](../../docs/evidence/gdextension-spike-2026-11-16.md))
+> and the team adopted **C++ GDExtension** as the primary architecture. This folder now holds the real
+> extension (issues **#6 Player**, **#7 HUD** — Koushik's lanes), not a plan. Combat (#8/#9) and
+> networking (#10/#11) remain teammates' lanes; this layer only exposes **seams** for them.
 
-## Architecture decision (Part 12.1)
+The approach (and why Godot + C++, not SFML) is in
+[`docs/rendering-architecture.md`](../../docs/rendering-architecture.md): Godot owns rendering, scenes,
+3D collision/raycast, animation, camera, audio, UI; **gameplay logic stays in C++20**, compiled as a
+`godot-cpp` GDExtension, still unit-tested with doctest.
 
-The original project specified **SFML + ENet + CMake**. The visual prototype is
-**Godot 4.7 Forward+**. These two renderers must not be blended. Recommended,
-pending your professor's constraints:
+## Layering (keep substantial graded C++)
 
-- **If Godot is permitted as the renderer:** Godot owns rendering, scenes, 3D
-  collision/raycast, lighting, animation, camera, audio. Gameplay logic stays in
-  **C++20** compiled as a **GDExtension** (`godot-cpp`). Networking uses Godot's
-  built-in **ENetMultiplayerPeer** (host = authoritative server) rather than a
-  second hand-rolled ENet stack.
-- **If the course strictly requires SFML rendering:** that is a *course-
-  compliance blocker*. Keep the existing SFML/ENet project (`../../src`,
-  `../../tests`, `CMakeLists.txt`) as the graded deliverable and treat this
-  Godot build as a **separate visual prototype**. Do not delete the SFML code.
-
-The existing SFML game (`../../src`, smoke-test `fireteam_skirmish`) and tests
-are **untouched** by this Godot work.
-
-## Class mapping (preserve the original concepts — Part 12.1)
-
-| Original C++ concept | GDExtension class (godot-cpp) | Notes |
+| Layer | Lives in | Role |
 |---|---|---|
-| `Entity` (abstract) | `class Entity : public CharacterBody3D` | shared movement/health base |
-| `Player` | `class Player : public Entity` | input-driven; WASD on X/Z plane |
-| `Bot` | `class Bot : public Entity` | NavigationAgent3D + LOS raycasts |
-| `Weapon` / `Rifle` | `class Weapon`, `class Rifle : public Weapon` | hitscan via `PhysicsDirectSpaceState3D::intersect_ray` |
-| `GameWorld` | `class GameWorld : public Node3D` | owns entities, spawns, match flow |
-| `NetworkManager` | wrapper over `ENetMultiplayerPeer` + RPCs | host authoritative |
-| `GameState` | `enum { Lobby, InGame, MatchOver }` | state machine on GameWorld |
+| `fireteam::Player : Entity` | `src/Player.cpp` (**fireteam_core**, doctested) | engine-agnostic model: planar movement, ammo/reload, respawn, team, snapshot seam |
+| `PlayerBody : CharacterBody3D` | `godot/cpp/src/player_body.*` | thin adapter: input → model → `move_and_slide` → write resolved X/Z back |
+| `GameWorldNode : Node3D` | `godot/cpp/src/game_world_node.*` | match flow via `fireteam::GameState` + timer/scores |
 
-Existing `Vector2` ground math can be reused for X/Z; **collision and hitscan
-must run in 3D** (`Vector3`, Godot physics) — the raycast cover tests in
-`build_arena.gd::_run_cover_tests()` already demonstrate the exact 3D hitscan
-call the `Rifle` will use.
+The model is `Entity`-derived, so Khushal's `Weapon::fire(Entity&)` (#16) targets a `Player` unchanged
+when combat lands. Movement/ammo/respawn are tested in `tests/test_player.cpp` (pure C++, no engine).
 
-## Build skeleton (next step, not done)
+### Seams (not implemented here — teammates' lanes)
+- **Combat (#8/#9):** `PlayerBody::request_fire()` consumes a round via the model and returns whether a
+  shot left the muzzle. It does **not** compute hits/damage; the weapon system does, through
+  `Entity::applyDamage`.
+- **Networking (#10/#11):** `fireteam::Player::snapshot()` / `applyRemoteState()` are the authoritative
+  state seam, fed by local test data for now. The transport is the C++ `NetworkManager` (one stack —
+  **not** Godot's `ENetMultiplayerPeer`), consistent with the spike and `docs/rendering-architecture.md`.
+
+## Build (CMake, not scons)
+
+godot-cpp is pinned via `FetchContent` at the spike-proven commit
+`abb196939767b7bbee0b3a380faefdcbdb118a54` (it bundles `extension_api-4-7.json`; there is no 4.7
+branch, so the commit is pinned). Use the CLion-bundled MinGW GCC + `"MinGW Makefiles"` (the bundled
+cygwin `ninja` is broken). C++20 is required (`std::erase_if`).
 
 ```
-godot/cpp/
-  godot-cpp/            # submodule: git submodule add https://github.com/godotengine/godot-cpp
-  src/
-    register_types.cpp  # GDREGISTER_CLASS for each class above
-    entity.{h,cpp} player.{h,cpp} bot.{h,cpp}
-    weapon.{h,cpp} rifle.{h,cpp}
-    game_world.{h,cpp} network_manager.{h,cpp}
-  SConstruct            # scons build -> ../bin/libfireteam.<platform>.<target>
-  ../fireteam.gdextension  # tells Godot where the compiled library is
+# default: fetch + build godot-cpp, then the extension
+cmake -S godot/cpp -B build-ext -G "MinGW Makefiles" \
+      -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+cmake --build build-ext -j            # -> godot/cpp/bin/fireteam.dll
+
+# fast local iteration against an already-built godot-cpp:
+#   add -DGODOTCPP_PREBUILT=ON -DGODOTCPP_SRC=<checkout> \
+#       -DGODOTCPP_LIB=<libgodot-cpp...a> -DGODOTCPP_GEN=<build dir>
 ```
 
-Build: `cd godot/cpp && scons platform=windows target=template_debug`
-(requires Python + SCons + the godot-cpp submodule at the 4.7 branch).
+Ship **`libwinpthread-1.dll`** beside `fireteam.dll` in `godot/cpp/bin/` — the spike confirmed Godot
+fails with "Missing dependencies" (Error 126) without it. Built binaries are git-ignored; teammates
+build locally or pull the CI artifact, then run an import pass (`godot --headless --import --path godot`)
+so Godot writes `.godot/extension_list.cfg` and loads the extension.
 
-## Priority order for the gameplay pass
+## Platforms
+Windows (MinGW GCC 15.2.0) is **built and verified**. `fireteam.gdextension` also declares macOS
+entries; those are built in CI / by the Mac teammate and are **unverified on the Windows dev machine**
+(godot-cpp is cross-platform, so they are expected to work once built). Linux/macOS CI is a separate,
+non-blocking workflow.
 
-1. `Player` movement (WASD on X/Z, accel/decel, crouch, collision) — reuses the
-   `CONFIG` scale constants already in `build_arena.gd`.
-2. `Rifle` 3D hitscan + the cover rules the raycast tests already encode.
-3. `GameWorld` + `GameState` (Lobby/InGame/MatchOver), team-win condition.
-4. `NetworkManager` over ENetMultiplayerPeer, host authoritative, transform/
-   health/fire sync, join/disconnect/match-end.
-5. `Bot` with NavigationAgent3D on a navmesh baked from the arena collision.
+## Verify
+```
+cmake --build build-ext -j                                   # extension builds
+godot --headless --import --path godot                       # registers the extension
+godot --headless --path godot res://scenes/game_smoke.tscn   # -> GAMEPLAY_SMOKE PASS
+ctest --test-dir <core build>                                # 37 doctests incl. Player
+```

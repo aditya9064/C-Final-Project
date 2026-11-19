@@ -41,6 +41,10 @@ Thumbs.db
 # Logs
 *.log
 
+# Godot editor cache (regenerated on import; never commit). extension_list.cfg,
+# the import cache and shader cache all live here.
+godot/.godot/
+
 # Godot/Blender pipeline: Blender autosave backups and per-machine tool paths
 # (godot/pipeline/setup.ps1 writes config.local.json; config.json is the template)
 *.blend1
