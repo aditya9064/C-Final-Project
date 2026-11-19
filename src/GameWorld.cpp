@@ -1,7 +1,7 @@
 #include "fireteam/GameWorld.hpp"
+#include "fireteam/Time.hpp"
 
 #include <algorithm>
-#include <cmath>
 #include <stdexcept>
 #include <utility>
 
@@ -15,9 +15,7 @@ void GameWorld::addEntity(std::unique_ptr<Entity> entity) {
 }
 
 void GameWorld::update(float deltaSeconds) {
-  if (!std::isfinite(deltaSeconds) || deltaSeconds < 0.0f) {
-    throw std::invalid_argument("deltaSeconds must be finite and non-negative");
-  }
+  requireValidDt(deltaSeconds);
 
   for (const auto& entity : entities_) {
     if (entity->isAlive()) {

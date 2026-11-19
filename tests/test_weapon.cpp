@@ -1,6 +1,8 @@
 #include <doctest/doctest.h>
 
+#include <limits>
 #include <memory>
+#include <stdexcept>
 #include <type_traits>
 
 #include "fireteam/Rifle.hpp"
@@ -198,7 +200,7 @@ TEST_CASE("Shooting a dead target is a miss") {
   CHECK(target.health() == 0);
 }
 
-TEST_CASE("Zero or negative update time is ignored") {
+TEST_CASE("Zero update time is ignored and invalid time is rejected") {
   Rifle rifle(25, 100.0f, 0.5f);
   Dummy shooter(Vector2(0, 0), 100);
   Dummy target(Vector2(10, 0), 100);
@@ -207,8 +209,14 @@ TEST_CASE("Zero or negative update time is ignored") {
   rifle.update(0.0f);
   CHECK(rifle.cooldownLeft() == 0.5f);
 
-  rifle.update(-1.0f);  // must not add time to the cooldown
-  CHECK(rifle.cooldownLeft() == 0.5f);
+  for (float invalid : {-1.0f, std::numeric_limits<float>::quiet_NaN(),
+                        std::numeric_limits<float>::infinity(),
+                        -std::numeric_limits<float>::infinity()}) {
+    CHECK_THROWS_AS(rifle.update(invalid), std::invalid_argument);
+    CHECK(rifle.cooldownLeft() == 0.5f);
+  }
+  rifle.update(0.5f);
+  CHECK(rifle.canFire());
 }
 
 TEST_CASE("Bad constructor values get fixed") {
