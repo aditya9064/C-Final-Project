@@ -40,10 +40,17 @@ FetchContent_MakeAvailable(SFML enet)
 # without opening a graphics window.
 add_library(fireteam_core STATIC
   src/Vector2.cpp
+  src/Vector3.cpp
   src/Entity.cpp
+  src/Weapon.cpp
+  src/Rifle.cpp
   src/NetworkManager.cpp
   src/GameWorld.cpp
   src/GameState.cpp
+  src/Combat.cpp
+  src/Grenade.cpp
+  src/Projectile.cpp
+  src/Bot.cpp
 )
 # PUBLIC: anyone linking fireteam_core also gets this include path.
 target_include_directories(fireteam_core PUBLIC include ${enet_SOURCE_DIR}/include)
@@ -68,6 +75,23 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_RUNTIME_DLLS:fireteam_skirmish>
       $<TARGET_FILE_DIR:fireteam_skirmish>
+    COMMAND_EXPAND_LISTS
+  )
+endif()
+
+# --- Combat demo (throwaway, not the real game) -----------------------------
+# A small first-person 3D window (SFML + basic OpenGL) for trying out the
+# combat code by hand until the real Player, input and renderer exist.
+# See demo/combat_demo.cpp.
+find_package(OpenGL REQUIRED)
+add_executable(fireteam_combat_demo demo/combat_demo.cpp)
+target_link_libraries(fireteam_combat_demo PRIVATE fireteam_core sfml-graphics sfml-window sfml-system OpenGL::GL)
+
+if(WIN32)
+  add_custom_command(TARGET fireteam_combat_demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      $<TARGET_RUNTIME_DLLS:fireteam_combat_demo>
+      $<TARGET_FILE_DIR:fireteam_combat_demo>
     COMMAND_EXPAND_LISTS
   )
 endif()
