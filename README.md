@@ -253,8 +253,9 @@ remote player uses a supplied teal or orange soldier model. An animated
 first-person arms-and-weapon model follows the camera; click plays its fire
 animation and R plays a visual reload. The HUD, adapted from Koushik's PR #20,
 shows replicated health, team, phase, winner, and a crosshair. These visuals
-do not yet implement shooting
-or ammunition. The soldier models are static. Asset attribution and license
+do not yet implement shooting or ammunition. Koushik's rigged versions of the
+soldiers play idle or jogging animations based on replicated position changes;
+combat animations are not networked. Asset attribution and license
 details are in [the Godot integration guide](godot/cpp/README.md). The older
 raylib smoke test is preserved behind
 `-DFIRETEAM_BUILD_LEGACY_SMOKE=ON`; core-only tests can use
@@ -342,5 +343,5 @@ responsibility, not exclusive access.)
 
 ## License
 
-Project code is licensed under [MIT](LICENSE). The animated viewmodel has
-separate [attribution and license terms](godot/cpp/README.md#animated-viewmodel-attribution).
+Project code is licensed under [MIT](LICENSE). Assets have separate
+[attribution and license terms](godot/cpp/README.md#asset-attribution).

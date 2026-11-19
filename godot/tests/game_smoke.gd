@@ -65,6 +65,14 @@ func _run() -> void:
 		for i in range(2):
 			_check(_mesh_count(visuals.soldiers[i]) > 0, "Soldier model is empty")
 			_check_mesh_lighting(visuals.soldiers[i])
+			var soldier_skeletons: Array[Node] = visuals.soldiers[i].find_children("*", "Skeleton3D", true, false)
+			_check(soldier_skeletons.size() == 1, "Soldier must have a skeleton")
+			if soldier_skeletons.size() == 1:
+				for clip in ["idle", "jog"]:
+					_check(visuals.soldier_animations[i].get_animation(clip).loop_mode != Animation.LOOP_NONE,
+						clip + " must loop")
+					_check_clip_motion(visuals.soldier_animations[i], soldier_skeletons[0] as Skeleton3D, clip)
+				visuals.soldier_animations[i].play("idle")
 			var bounds: AABB = visuals._bounds(visuals.soldiers[i], Transform3D.IDENTITY)
 			_check(absf(bounds.position.y) < 0.01 and absf(bounds.size.y - 1.8) < 0.01,
 				"Soldier must be 1.8 m tall with feet at the player's position")
@@ -99,6 +107,31 @@ func _run() -> void:
 		visuals.update_view(game.session.get_state())
 		_check(visuals.viewmodel.visible and visuals.animation_player.current_animation == "draw_first",
 			"Viewmodel must play its draw animation when shown")
+		var movement_state: Dictionary = game.session.get_state().duplicate(true)
+		visuals.update_view(movement_state, 0.016)
+		movement_state.players[1].position.x += 0.1
+		visuals.update_view(movement_state, 0.016)
+		_check(visuals.soldier_animations[1].current_animation == "jog",
+			"Remote position changes must start the locomotion animation")
+		visuals.update_view(movement_state, 0.1)
+		_check(visuals.soldier_animations[1].current_animation == "jog",
+			"Locomotion must persist briefly between snapshots")
+		visuals.update_view(movement_state, 0.11)
+		_check(visuals.soldier_animations[1].current_animation == "idle",
+			"Stopping must return the soldier to idle")
+		movement_state.players[1].id = 0
+		visuals.update_view(movement_state, 0.016)
+		movement_state.players[1].id = 2
+		movement_state.players[1].position.x += 20.0
+		visuals.update_view(movement_state, 0.016)
+		_check(visuals.soldier_animations[1].current_animation == "idle",
+			"A newly connected player must not jog because of a spawn jump")
+		movement_state.players[1].position.x += 0.1
+		visuals.update_view(movement_state, 0.016)
+		movement_state.players[1].health = 0
+		visuals.update_view(movement_state, 0.016)
+		_check(visuals.soldier_animations[1].current_animation == "idle",
+			"An eliminated player must stop jogging")
 	var client_camera := Camera3D.new()
 	root.add_child(client_camera)
 	var client_visuals = load("res://scripts/player_visuals.gd").new()
@@ -112,6 +145,7 @@ func _run() -> void:
 			"Client viewmodel must follow its first-person camera")
 	_check(client.get_node("HostPlayer").visible, "Client must see the remote host")
 	_check(not client.get_node("ClientPlayer").visible, "Client must not see its own soldier")
+	client.hide()
 	var hud: CanvasLayer = game.hud
 	hud.update_state(game.session.get_state(), false)
 	_check(not hud.visible, "HUD must hide when controls are inactive")

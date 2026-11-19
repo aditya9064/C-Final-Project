@@ -42,18 +42,21 @@ health, match phase, winner, and a crosshair in first person. Ammo, scores,
 and timers are not displayed because the multiplayer session does not yet
 provide those values.
 
-The user-supplied teal and orange soldier GLBs provide the remote player
-visuals; the local player sees the supplied animated arms-and-weapon GLB.
+Koushik's rigged versions of the user-supplied teal and orange soldiers
+provide the remote player visuals; the local player sees the supplied
+animated arms-and-weapon GLB. The soldiers play idle and jogging animations
+based on replicated position changes, with a short hold between snapshots.
+These are presentation estimates, not replicated animation events: directional
+movement and remote firing, reload, and death animations are not implemented.
 Both teams use the same first-person viewmodel. It plays draw, fire, and
 reload animations, but these are visual only: there is no firing or ammo
 logic yet. The earlier team-colored static weapon GLBs remain in the project
-but are not displayed. Capsules remain as collision shapes. The soldiers have
-no skeletons or animations and remain in their static pose.
+but are not displayed. Capsules remain as collision shapes.
 
 Godot's import postprocessor generates missing normals and tangents for the
-static team models without modifying the source GLBs. Those rebuilt meshes
-have no generated LODs or optimized shadow meshes; the animated viewmodel and
-overall performance have not been benchmarked.
+older static team models without modifying the source GLBs. The rigged soldier
+models use Godot's standard importer to retain their skinning. Overall
+performance has not been benchmarked.
 Movement is host authoritative, with no client prediction yet. Walls/cover
 block movement through Godot physics; there is no jump, crouch, or gravity
 simulation. The fire signal is an integration hook, not a weapon.
@@ -104,7 +107,17 @@ Koushik's render QA still works via `-- --view overview`, `-- --bench`, or
 `-- --inspect` for the free-fly camera. Render screenshots need a GPU; the
 headless integration tests do not claim visual or two-computer LAN validation.
 
-## Animated viewmodel attribution
+## Asset attribution
+
+The rigged `teal_soldier.glb` and `orange_soldier.glb` were integrated from
+Koushik's commit `76e80fd` in PR #20. His player rig identifies the skeleton
+and animation clips as the same ones used with his original models. His
+character credits identify the
+[Quaternius Universal Base Characters](https://quaternius.com/packs/universalbasecharacters.html)
+and [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html)
+as CC0 sources for that rig and its animations.
+
+### Animated viewmodel
 
 The supplied `fennec_animated_viewmodel.glb` identifies its source as
 ["[MW: 2019] Fennec (Viper's GMod MW Base)" by VuckyZ](https://sketchfab.com/3d-models/mw-2019-fennec-vipers-gmod-mw-base-d34cd93090b0409382790b3c63818bba),

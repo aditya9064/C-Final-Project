@@ -152,11 +152,11 @@ func _input(event: InputEvent) -> void:
 		elif session.get_state().active and not menu.get_global_rect().has_point(event.position):
 			_capture()
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if session == null:
 		return
 	var state := session.get_state()
-	player_visuals.update_view(state)
+	player_visuals.update_view(state, delta)
 	hud.update_state(state, controls_active)
 	host_button.disabled = state.active
 	join_button.disabled = state.active

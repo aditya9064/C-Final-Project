@@ -134,6 +134,19 @@ Format (one entry per use):
 
 <!-- Add further entries above this line as the project progresses. -->
 
+### 2026-11-18 - Rigged multiplayer soldiers - GitHub Copilot
+- **Why:** The user requested Koushik's latest changes while retaining the
+  first-person multiplayer prototype and the selected soldier designs.
+- **Generated changes:** Copilot integrated Koushik's rigged soldier GLBs
+  from commit `76e80fd`, with presentation-only idle/jog animations inferred
+  from replicated movement. The existing camera, animated viewmodel, and
+  networking remain in place. Learner and teammate review are not confirmed.
+- **Validation:** Godot integration tests cover skeletal motion, movement
+  transitions, visibility, and two-process loopback. Front/back and first-person
+  windowed captures were inspected; the windowed input smoke test failed
+  after losing window focus. Firing and other combat animations are not
+  synchronized, and two-computer LAN play and performance remain unverified.
+
 ### 2026-11-18 - First-person HUD adaptation - GitHub Copilot
 - **Why:** The user asked to adapt useful work from the open teammate PRs
   while preserving first-person multiplayer and the newer player models.
